@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
@@ -29,11 +31,20 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +58,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -54,11 +66,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -76,7 +91,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun EpgLayoutContent(mainViewModel: MainViewModel = viewModel()) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
-
+    var isOpen by remember { mutableStateOf(true) }
     /**
      * Create Hours with Half Hour
      */
@@ -93,6 +108,10 @@ fun EpgLayoutContent(mainViewModel: MainViewModel = viewModel()) {
 
     when (val s = uiState) {
         is HomeScreenUiState.Ready -> {
+//            if (isOpen) {
+//                // Call CardDialog and provide a lambda to dismiss the dialog
+//                CardDialog(onDismiss = { isOpen = false })
+//            }
             CreateViewV3({ scrollable, scrollToFirst ->
                 Log.d("TAG", "onScroll : scrollable = $scrollable, scrollToFirst = $scrollToFirst")
             }, s.channelList, programsList, hoursList)
@@ -207,6 +226,10 @@ fun CreateViewV3(
     val bgwColor = MaterialTheme.colorScheme.background
     val recordColor = MaterialTheme.colorScheme.errorContainer
 
+    /**
+     * Opens Favorite Dialog
+     */
+    var isOpen by remember { mutableStateOf(false) }
     LaunchedEffect(true) {
         coroutineScope.launch {
             //   val scrollPosition = 15500 // Adjust itemWidth as needed
@@ -216,6 +239,9 @@ fun CreateViewV3(
             //horizontalScrollState.scrollTo(hoursIndex)
             //  horizontalScrollState.animateScrollTo(scrollPosition)
         }
+    }
+    if (isOpen) {
+        CardDialog(onDismiss = { isOpen = false })
     }
 
     Box(
@@ -429,7 +455,9 @@ fun CreateViewV3(
                                     .width(firstColumnWidth)
                                     .height(cellHeight)
                                     .clip(shape = RoundedCornerShape(15.dp, 0.dp, 0.dp, 15.dp))
-                                    .clickable(onClick = { /* Handle click event */ })
+                                    .clickable(onClick = {
+                                       isOpen = true
+                                    })
                                     .scrollable(
                                         state = verticalScrollState,
                                         orientation = Orientation.Vertical
@@ -672,7 +700,117 @@ fun IndeterminateCircularProgressBarDemo() {
     }
 }
 
+@Composable
+fun LargerDialog(onCardClicked: () -> Unit) {
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Card(
+            modifier = Modifier.size(400.dp, 100.dp).clickable(onClick = onCardClicked),
+
+            colors = CardDefaults.cardColors(
+                containerColor = Color.DarkGray, //Card background color
+                contentColor = Color.White  //Card content color,e.g.text
+            )
+        ){
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painterResource(R.drawable.baseline_favorite_24),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .padding(start = 40.dp)
+                        .focusable(true)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(
+                    painterResource(R.drawable.baseline_favorite_24),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .padding(start = 40.dp)
+                        .focusable(true)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(
+                    painterResource(R.drawable.baseline_favorite_24),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .padding(start = 40.dp)
+                        .focusable(true)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                ClickableImage(
+                    resourceId = R.drawable.baseline_favorite_24,
+                    onClick = { /* Handle click event for this image */ }
+                )
+
+            }
+
+        }
+
+    }
+
+    }
+@Composable
+fun ClickableImage(resourceId: Int, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painterResource(resourceId),
+            contentDescription = "",
+            modifier = Modifier.fillMaxSize().focusable(true)
+        )
+    }
+}
+@Composable
+fun CardDialog(onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss
+    ) {
+        Card(
+            modifier = Modifier
+                .width(400.dp)
+                .height(100.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.DarkGray,
+                contentColor = Color.White
+            )
+        ) {
+
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .clickable { onDismiss() },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ClickableImage(
+                        resourceId = R.drawable.baseline_favorite_24,
+                        onClick = { onDismiss() }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    ClickableImage(
+                        resourceId = R.drawable.baseline_favorite_24,
+                        onClick = { onDismiss() }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    ClickableImage(
+                        resourceId = R.drawable.baseline_favorite_24,
+                        onClick = { onDismiss() }
+                    )
+                }
+            }
+    }
+}
 @Composable
 @Preview(device = Devices.TV_1080p)
 fun EpgLayoutContentPreview() {
