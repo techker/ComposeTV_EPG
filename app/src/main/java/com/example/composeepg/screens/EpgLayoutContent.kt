@@ -779,30 +779,19 @@ fun CardDialog(onDismiss: () -> Unit) {
     ) {
         Card(
             modifier = Modifier
-                .width(400.dp)
-                .height(100.dp),
+                .width(60.dp)
+                .height(60.dp),
             colors = CardDefaults.cardColors(
                 containerColor = Color.DarkGray,
                 contentColor = Color.White
             )
         ) {
-
                 Row(
                     modifier = Modifier
                         .padding(16.dp)
                         .clickable { onDismiss() },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ClickableImage(
-                        resourceId = R.drawable.baseline_favorite_24,
-                        onClick = { onDismiss() }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    ClickableImage(
-                        resourceId = R.drawable.baseline_favorite_24,
-                        onClick = { onDismiss() }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                     ClickableImage(
                         resourceId = R.drawable.baseline_favorite_24,
                         onClick = { onDismiss() }
