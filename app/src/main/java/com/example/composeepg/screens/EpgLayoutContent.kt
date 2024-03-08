@@ -19,14 +19,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
@@ -36,12 +37,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -56,34 +59,59 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import coil.compose.AsyncImage
 import com.example.composeepg.R
 import com.example.composeepg.data.ChannelRowItems
 import com.example.composeepg.data.MockData
 import com.example.composeepg.data.ProgramRowItems
+import com.example.composeepg.view.HomeScreenUiState
+import com.example.composeepg.view.MainViewModel
+import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun EpgLayoutContent() {
+fun EpgLayoutContent(mainViewModel: MainViewModel = viewModel()) {
+    val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
 
     /**
      * Create Hours with Half Hour
      */
     val hoursList = mutableListOf<String>()
-        for (hour in 0 until 24) {
+    for (hour in 0 until 24) {
         hoursList.add("$hour:00")
         hoursList.add("$hour:30")
     }
 
-    val programsList= MockData().createPrograms()
+    val programsList = MockData().createPrograms()
     val channelList = MockData().createChannels()
-    CreateViewV3( { scrollable, scrollToFirst ->
-        Log.d("TAG","onScroll : scrollable = $scrollable, scrollToFirst = $scrollToFirst")
-    }, channelList, programsList, hoursList)
+    val numberOfPrg = MockData().returnProgramRows(programsList)
+    val numberOfChannels = MockData().returnChannelRows(channelList)
 
+    when (val s = uiState) {
+        is HomeScreenUiState.Ready -> {
+            CreateViewV3({ scrollable, scrollToFirst ->
+                Log.d("TAG", "onScroll : scrollable = $scrollable, scrollToFirst = $scrollToFirst")
+            }, s.channelList, programsList, hoursList)
+        }
+        is HomeScreenUiState.Loading ->  IndeterminateCircularProgressBarDemo()
+        is HomeScreenUiState.Error -> Error()
+    }
 }
-
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun Error(modifier: Modifier = Modifier) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        androidx.tv.material3.Text(text = "Whoops, something went wrong.", modifier = modifier)
+    }
+}
 @Composable
 fun CreateViewV3(
     onVerticalScroll: (Boolean, Boolean) -> Unit,
@@ -98,29 +126,35 @@ fun CreateViewV3(
     val lazyListStateMainTable = rememberLazyListState()
     val lazyListStateFirstColumn = rememberLazyListState()
     val horizontalScrollState = rememberScrollState()
+    val lazyListStatePrograms = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
     val focusRequesterPrg = remember { FocusRequester() }
     var hasFocus by remember { mutableStateOf(false) }
-    val firstColumnWidth = 100.dp
+    val firstColumnWidth = 130.dp
     val cellHeight = 50.dp
     val verticalScrollState = rememberScrollState()
     var focusedIndex by remember { mutableStateOf(-1) }
     var focusedIndexP by remember { mutableStateOf(-1) }
+    var focusedIndexCh by remember { mutableStateOf(-1) }
     var hasFocusP by remember { mutableStateOf(false) }
     var listCompleted by remember { mutableStateOf(false) }
     var componentWidth by remember { mutableStateOf(0.dp) }
     var focusedProgram by remember { mutableStateOf("-1") }
-
+    val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val borderWidth = 1.dp
+
     val gradientColors = listOf(
         Color.DarkGray,
         Color.Blue,
         Color.Transparent
     )
+
     val reducedHours = mutableListOf<String>()
-    val startedAt= "07:00"
-    val startHour = startedAt.substringBefore(":").toInt() - 5    //put -5 to get the time in East, need adjust
+    val startedAt = "07:00"
+    val startHour =
+        startedAt.substringBefore(":").toInt()    //put -5 to get the time in East, need adjust
+
     // Create list of hours according to requested start time
     for (hour in startHour until startHour + 24) {
         val currentHour = hour % 24
@@ -129,13 +163,17 @@ fun CreateViewV3(
     }
 
     val currentTime = LocalTime.now()
-    val roundedTime = LocalTime.of(currentTime.hour, if (currentTime.minute < 30) 0 else 30) // Round time to nearest half hour
+    val roundedTime = LocalTime.of(
+        currentTime.hour,
+        if (currentTime.minute < 30) 0 else 30
+    ) // Round time to nearest half hour
+
     val formatter = DateTimeFormatter.ofPattern("H:mm") // Format as "hour:minute"
     val currentTimeString = roundedTime.format(formatter) // Format rounded time as string
 
     val indexReduced = reducedHours.indexOf(currentTimeString)
 
-    var hoursIndex =0
+    var hoursIndex = 0
     if (indexReduced != -1) {
         println("Current time is at index: $indexReduced time ${reducedHours.get(indexReduced)}")
         hoursIndex = indexReduced
@@ -143,9 +181,6 @@ fun CreateViewV3(
         println("Current time not found in the list")
     }
 
-    /**
-     *   .focusable(true) can only be in one part at a time.
-     */
     LaunchedEffect(lazyListStateMainTable.firstVisibleItemScrollOffset) {
         if (!lazyListStateFirstColumn.isScrollInProgress) {
             lazyListStateFirstColumn.scrollToItem(
@@ -167,34 +202,42 @@ fun CreateViewV3(
             lazyListStateFirstColumn.firstVisibleItemIndex <= 1
         )
     }
-    val shape =  RoundedCornerShape(8.dp)
+    val shape = RoundedCornerShape(8.dp)
 
     val bgwColor = MaterialTheme.colorScheme.background
     val recordColor = MaterialTheme.colorScheme.errorContainer
 
-
+    LaunchedEffect(true) {
+        coroutineScope.launch {
+            //   val scrollPosition = 15500 // Adjust itemWidth as needed
+            //    horizontalScrollState.scrollTo(scrollPosition)
+            // Animate scroll to the 10th item
+            //lazyListStatePrograms.animateScrollToItem(index = 5)
+            //horizontalScrollState.scrollTo(hoursIndex)
+            //  horizontalScrollState.animateScrollTo(scrollPosition)
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(150.dp)
-            .padding(start = 10.dp,top = 10.dp,bottom = 10.dp)
+            .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
             .background(Color.Transparent, shape = shape)
 
-    ){
+    ) {
         Column {
-            val selected =   programsList.filter { it.programID.toString() == focusedProgram }
-            if(focusedProgram != "-1") {
-
+            if (focusedProgram != "-1") {
+            val programSelected = MockData().getProgramData(focusedIndexP,focusedIndexCh)
                 AsyncImage(
-                    model = selected[0].programImage,
+                    model = programSelected.programImage,
                     contentDescription = "image",
                     modifier = Modifier
                         .width(250.dp)
                         .padding(start = 20.dp)
                         .height(200.dp)
                         .padding(start = 20.dp, top = 10.dp, bottom = 10.dp, end = 10.dp)
-                        .clip(RoundedCornerShape(topEnd = 8.dp , topStart = 8.dp))
+                        .clip(RoundedCornerShape(topEnd = 8.dp, topStart = 8.dp))
                         .drawWithContent {
                             drawContent()
                             drawRect(
@@ -208,8 +251,7 @@ fun CreateViewV3(
                         },
                     contentScale = ContentScale.Inside
                 )
-
-            }else{
+            } else {
                 Image(
                     painter = painterResource(R.drawable.default_card),
                     contentDescription = "image:",
@@ -218,7 +260,7 @@ fun CreateViewV3(
                         .width(250.dp)
                         .padding(start = 20.dp, top = 10.dp, bottom = 10.dp, end = 10.dp)
                         .height(200.dp)
-                        .clip(RoundedCornerShape(topEnd = 8.dp , topStart = 8.dp))
+                        .clip(RoundedCornerShape(topEnd = 8.dp, topStart = 8.dp))
                         .drawWithCache {
                             onDrawWithContent {
                                 drawContent()
@@ -241,22 +283,22 @@ fun CreateViewV3(
                 .align(Alignment.TopStart)
                 .padding(start = 230.dp)
         ) {
-            val selected =   programsList.filter { it.programID.toString()== focusedProgram }
-            if(focusedProgram != "-1"){
-                Log.d("TAG","selected = $selected")
+            if (focusedProgram != "-1") {
+                val programSelected = MockData().getProgramData(focusedIndexP,focusedIndexCh)
+                Log.d("TAG", "selected = $programSelected")
                 Text(
-                    text = selected[0].programName,
-                    modifier = Modifier.padding(20.dp,10.dp,0.dp,0.dp),
+                    text = programSelected.programName,
+                    modifier = Modifier.padding(20.dp, 10.dp, 0.dp, 0.dp),
                     color = Color.White
                 )
                 Text(
                     text = "TV-G,G,PG-13",
-                    modifier = Modifier.padding(20.dp,20.dp,0.dp,0.dp),
+                    modifier = Modifier.padding(20.dp, 20.dp, 0.dp, 0.dp),
                     color = Color.White
                 )
                 Text(
                     text = "Program Description Goes Here",
-                    modifier = Modifier.padding(20.dp,30.dp,20.dp,0.dp),
+                    modifier = Modifier.padding(20.dp, 30.dp, 20.dp, 0.dp),
                     color = Color.White
                 )
             }
@@ -265,10 +307,47 @@ fun CreateViewV3(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .width(400.dp)
-                .padding(end = 50.dp)
+                .padding(end = 200.dp)
         ) {
+            Divider(
+                color = Color.Black,
+                thickness = 1.dp,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(2.dp)
+                    .background(Color.White)
+                    .align(Alignment.CenterHorizontally),
 
+            )
 
+        }
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+
+        ) {
+            if (focusedProgram != "-1") {
+                val channelData = MockData().getChannelData(focusedIndexCh)
+                val programSelected = MockData().getProgramData(focusedIndexP,focusedIndexCh)
+                Text(
+                    text = programSelected.programStart.plus(" - ").plus(programSelected.programEnd),
+                    modifier = Modifier.padding(0.dp, 10.dp, 200.dp, 0.dp),
+                    color = Color.White
+                )
+                Text(
+                    text = channelData.channelID.toString().plus(" - ").plus(channelData.channelName),
+                    modifier = Modifier.padding(0.dp, 20.dp, 200.dp, 0.dp),
+                    color = Color.White
+                )
+                Image(
+                    painterResource(R.drawable.baseline_hd_24),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .width(48.dp)
+                        .height(48.dp)
+                )
+
+            }
         }
     }
     /**
@@ -286,7 +365,7 @@ fun CreateViewV3(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(state = horizontalScrollState)
-                .padding(start = 40.dp, bottom = 20.dp)
+                .padding(start = 60.dp, bottom = 20.dp)
                 .onGloballyPositioned {
                     componentWidth = with(density) {
                         it.size.width.toDp()
@@ -304,7 +383,8 @@ fun CreateViewV3(
                         item
                     }
 
-                Text(text = showTime,
+                Text(
+                    text = showTime,
                     modifier = Modifier
                         .padding(horizontal = 60.dp, vertical = 4.dp)
                         .onGloballyPositioned {
@@ -324,7 +404,7 @@ fun CreateViewV3(
                     .padding(start = 20.dp, top = 30.dp)
                     .wrapContentSize(),
                 contentPadding = PaddingValues(bottom = 8.dp),
-               state = lazyListStateFirstColumn,
+                state = lazyListStateFirstColumn,
             ) {
                 /**
                  * Channels
@@ -332,7 +412,7 @@ fun CreateViewV3(
                 itemsIndexed(items = channelsList, key = { _, itemB -> itemB.channelID!! })
 
                 { index, itemC ->
-                    val color = if(itemC.isFavorite) Color.Red else Color.LightGray
+                    val color = if (itemC.isFavorite) Color.Red else Color.LightGray
                     Box(
                         modifier = Modifier
                             .width(firstColumnWidth)
@@ -348,20 +428,12 @@ fun CreateViewV3(
                                 modifier = Modifier
                                     .width(firstColumnWidth)
                                     .height(cellHeight)
-//                                    .onFocusChanged { isFocused ->
-//                                        if (isFocused.isFocused) {
-//                                            focusedIndex = index
-//                                            hasFocus = true
-//                                        }
-//                                    }
                                     .clip(shape = RoundedCornerShape(15.dp, 0.dp, 0.dp, 15.dp))
                                     .clickable(onClick = { /* Handle click event */ })
-//                                    .focusable(true)
-                                    //.focusRequester(focusRequester)
-//                                    .scrollable(
-//                                        state = verticalScrollState,
-//                                        orientation = Orientation.Vertical
-//                                    )
+                                    .scrollable(
+                                        state = verticalScrollState,
+                                        orientation = Orientation.Vertical
+                                    )
                                     .border(1.dp, color)
                                     .background(Color.LightGray)
                                     .padding(4.dp),
@@ -372,7 +444,7 @@ fun CreateViewV3(
                                         .fillMaxWidth()
                                         .padding(start = 5.dp)
                                 ) {
-                                    if(itemC.isLocked){
+                                    if (itemC.isLocked) {
                                         Image(
                                             painterResource(R.drawable.baseline_lock_outline_24),
                                             contentDescription = "",
@@ -380,7 +452,7 @@ fun CreateViewV3(
                                                 .width(50.dp)
                                                 .height(50.dp)
                                         )
-                                    }else {
+                                    } else {
                                         if (itemC.channelLogo.isNotEmpty()) {
                                             AsyncImage(
                                                 model = itemC.channelLogo,
@@ -413,8 +485,8 @@ fun CreateViewV3(
                                     }
                                     Spacer(modifier = Modifier.width(10.dp)) // Add spacing between texts
                                     Text(
-                                        text = index.toString(),
-                                        modifier = Modifier.padding(0.dp,10.dp,0.dp,5.dp),
+                                        text = index.plus(1).toString(),
+                                        modifier = Modifier.padding(0.dp, 10.dp, 0.dp, 5.dp),
                                         color = Color.Black
                                     )
                                 }
@@ -442,120 +514,107 @@ fun CreateViewV3(
                         contentPadding = PaddingValues(bottom = 8.dp),
                         state = lazyListStateMainTable
                     ) {
-                        //Number of channels
                         //TODO fill Gaps with empty programs and cell Size.
                         itemsIndexed(items = channelsList) { index, item ->
-                            if(index == channelsList.size){
+                            if (index == channelsList.size) {
                                 listCompleted = true
                             }
                             val channelID = item.channelID
 
                             Row {
-                                val fileteredPrg = programsList.filter { it.programID == channelID }
-                                fileteredPrg.forEachIndexed { i, itemPrg ->
-                                    val prgStart = itemPrg.programStart
-                                    val prgEnd = itemPrg.programEnd
+                                val allPrograms = MockData().getAllProgramsForChannel(channelID)
+                                allPrograms.forEachIndexed { i, itemPrg ->
 
-                                    /**
-                                     * Need to fix according to program time
-                                     * Need the width of the hours cell
-                                     */
-                                    val cellWidth = 320 //60min
+                                            val prgStart = itemPrg.programStart
+                                            val prgEnd = itemPrg.programEnd
 
-                                    Column(
-                                        modifier = Modifier
-                                            .height(cellHeight)
-                                            .width(cellWidth.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .height(cellHeight)
-                                                .width(cellWidth.dp)  ///individual with per time
-                                                .drawWithContent {
-                                                    drawContent()
-                                                    drawLine(
-                                                        color = Color.Black,
-                                                        start = Offset(0f, 0f),
-                                                        end = Offset(size.width, 0f),
-                                                        strokeWidth = borderWidth.toPx(),
-                                                        cap = StrokeCap.Square
-                                                    )
-                                                }
-                                                .onFocusChanged { isFocused ->
-                                                    if (isFocused.isFocused) {
-                                                        focusedIndexP = index
-                                                        hasFocusP = true
-                                                        focusedProgram =
-                                                            itemPrg.programID.toString()
-                                                    }
-                                                }
-                                                .clickable(onClick = { /* Handle click event */ })
-                                                .focusable(true)
-                                                .focusRequester(focusRequesterPrg),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Divider(
-                                                color = Color.Black,
-                                                thickness = 1.dp,
+                                            /**
+                                             * Need to fix according to program time
+                                             * Need the width of the hours cell
+                                             */
+                                            val cellWidth = 320 //60min
+
+                                            Column(
                                                 modifier = Modifier
-                                                    .fillMaxHeight()
-                                                    .width(1.dp)
-                                                    .align(Alignment.TopStart)
-                                            )
-                                            Text(text = "${itemPrg.programName}", color = Color.White)
-                                            if(itemPrg.isLookBack) {
-                                                Column(
-                                                    modifier = Modifier.padding(start = 30.dp)
-                                                        .align(Alignment.CenterStart)
+                                                    .height(cellHeight)
+                                                    .width(cellWidth.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .height(cellHeight)
+                                                        .width(cellWidth.dp)  ///individual with per time
+                                                        .drawWithContent {
+                                                            drawContent()
+                                                            drawLine(
+                                                                color = Color.Black,
+                                                                start = Offset(0f, 0f),
+                                                                end = Offset(size.width, 0f),
+                                                                strokeWidth = borderWidth.toPx(),
+                                                                cap = StrokeCap.Square
+                                                            )
+                                                        }
+                                                        .onFocusChanged { isFocused ->
+                                                            if (isFocused.isFocused) {
+                                                                Log.d("TAG", "isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
+                                                                focusedIndex = index + 1
+                                                                focusedIndexP = itemPrg.programID
+                                                                focusedIndexCh = itemPrg.channelId
+                                                                hasFocusP = true
+                                                                focusedProgram = itemPrg.programID.toString()
+                                                            }
+                                                        }
+                                                        .clickable(onClick = { /* Handle click event */ })
+                                                        .focusable(true)
+                                                        .focusRequester(focusRequesterPrg),
+                                                    contentAlignment = Alignment.Center
                                                 ) {
-                                                    Image(
-                                                        painterResource(R.drawable.reset),
-                                                        contentDescription = "",
-                                                        modifier = Modifier
-                                                            //.width(20.dp)
-                                                            //.height(20.dp)
-                                                            .width(30.dp)
-                                                            .align(Alignment.Start)
-                                                            .padding(start = 20.dp)
-                                                    )
-                                                }
-                                               }
-                                            Column(modifier = Modifier
-                                                .padding(end = 0.dp)
-                                                .align(Alignment.CenterEnd)){
-                                                //Draws circle
-//                                                Box(
-//                                                    modifier = Modifier
-//                                                        .size(10.dp)
-//                                                        .clip(CircleShape)
-//                                                        .background(Color.Red)
-//                                                )
-                                                if(itemPrg.isRecording) {
                                                     Divider(
-                                                        color = Color.Red,
-                                                        thickness = 3.dp,
+                                                        color = Color.Black,
+                                                        thickness = 1.dp,
                                                         modifier = Modifier
                                                             .fillMaxHeight()
-                                                            .width(3.dp)
-                                                            .align(Alignment.End)
-                                                            .drawWithContent {
-                                                                drawContent()
-                                                                drawRect(
-                                                                    Brush.verticalGradient(
-                                                                        colors = listOf(
-                                                                            Color.Transparent,
-                                                                            recordColor.copy(alpha = 0.5f)
-                                                                        )
-                                                                    )
-                                                                )
-                                                            },
+                                                            .width(1.dp)
+                                                            .align(Alignment.TopStart)
                                                     )
-                                                }
-                                            }
-                                            }
+                                                    Text(
+                                                        text = "${itemPrg.programName}",
+                                                        color = Color.White
+                                                    )
+                                                    if (itemPrg.isLookBack) {
+                                                        Column(
+                                                            modifier = Modifier
+                                                                .padding(start = 30.dp)
+                                                                .align(Alignment.CenterStart)
+                                                        ) {
+                                                            Image(
+                                                                painterResource(R.drawable.reset),
+                                                                contentDescription = "",
+                                                                modifier = Modifier
+                                                                    .width(30.dp)
+                                                                    .align(Alignment.Start)
+                                                                    .padding(start = 20.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                    Column(
+                                                        modifier = Modifier
+                                                            .padding(end = 0.dp)
+                                                            .align(Alignment.CenterEnd)
+                                                    ) {
+                                                        if (itemPrg.isRecording) {
+                                                            Image(
+                                                                painterResource(R.drawable.ic_record),
+                                                                contentDescription = "",
+                                                                modifier = Modifier
+                                                                    .width(30.dp)
+                                                                    .align(Alignment.Start)
+                                                                    .padding(end = 20.dp)
+                                                            )
+                                                        }
+                                                    }
 
+                                            }
                                         }
-                                    }
                                 }
                             }
                         }
@@ -564,6 +623,55 @@ fun CreateViewV3(
             }
         }
     }
+
+}
+
+private fun fillGaps(hoursList: MutableList<String>, programsList: Int) {
+    /**
+     * Need to fill the gaps on left over hours that have no programs
+     * hours list - programs list
+     * need programs id and add left over.
+     * divide hours / 2 since you have half hours
+     * Number of channels
+     * number of shows per channel
+     */
+    val availableHoursLeft = (hoursList.size / 2) //Divide by 2 to remove the half hours
+    val toFill = availableHoursLeft - programsList //Number of programs to fill
+
+    /**
+     * Need to fill the gaps on left over hours that have no programs
+     * and associate channel to programs
+     * ProgramRowItems(programID = add, programName = "Gaps i", "",programStart = "1.00", programEnd = "2.00", channelId = 1,false,false,false)    }
+     */
+
+    Log.d("TAG", "availableHoursLeft = $availableHoursLeft from ${hoursList.size} number of prg $programsList toFill $toFill")
+    for (i in programsList until availableHoursLeft) {
+        //ProgramRowItems(programID = 1, programName = "Gaps i", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 1,true,true,false)    }
+        Log.d("TAG", "programRowItems  index = $i")
+    }
+}
+
+@Composable
+fun IndeterminateCircularProgressBarDemo() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .clip(CircleShape)
+                        .shadow(elevation = 12.dp, shape = CircleShape, clip = true)
+                        .border(2.dp, Color.White, CircleShape),
+            painter = painterResource(id = R.drawable.default_card),
+            contentScale = ContentScale.FillBounds,
+            contentDescription = "Splash Screen",
+        )
+    }
+}
+
 
 @Composable
 @Preview(device = Devices.TV_1080p)

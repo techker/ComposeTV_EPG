@@ -1,12 +1,8 @@
 package com.example.composeepg.data
 
+import kotlinx.coroutines.flow.flow
+
 class MockData {
-
-
-
-
-
-
 
     fun createChannels():MutableList<ChannelRowItems> {
         return mutableListOf(
@@ -23,13 +19,29 @@ class MockData {
         )
     }
 
+    fun createChannelsFlow()= flow {
+         emit(createChannels())
+    }
+    fun createProgramsFlow()= flow {
+        emit(createPrograms())
+    }
+    fun getAllProgramsForChannel(channelId:Int):MutableList<ProgramRowItems> {
+        return createPrograms().filter { it.channelId == channelId }.toMutableList()
+    }
+    fun getChannelData(channelId:Int):ChannelRowItems {
+        return createChannels().filter { it.channelID == channelId }.first()
+    }
+    fun getProgramData(programId:Int,channelId: Int):ProgramRowItems {
+        return createPrograms().filter { it.programID == programId && it.channelId == channelId }.first()
+    }
+
     fun createPrograms(): MutableList<ProgramRowItems> {
         return mutableListOf(
-            ProgramRowItems(programID = 1, programName = "Program 1", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 1,true,true,false),
-            ProgramRowItems(programID = 2, programName = "Program 2","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "2.00", programEnd = "3.00", channelId = 1,false,false,false),
-            ProgramRowItems(programID = 3, programName = "Program 3", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "3.00", programEnd = "4.00", channelId = 1,true,false,false),
-            ProgramRowItems(programID = 4, programName = "Program 4","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "4.00", programEnd = "5.00", channelId = 1,false,true,false),
-            ProgramRowItems(programID = 5, programName = "Program 5", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "5.00", programEnd = "5.50", channelId = 1,false,false,false),
+            ProgramRowItems(programID = 1, programName = "Program 1A", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 1,true,true,false),
+            ProgramRowItems(programID = 2, programName = "Program 2A","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "2.00", programEnd = "3.00", channelId = 1,false,false,false),
+            ProgramRowItems(programID = 3, programName = "Program 3A", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "3.00", programEnd = "4.00", channelId = 1,true,false,false),
+            ProgramRowItems(programID = 4, programName = "Program 4A","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "4.00", programEnd = "5.00", channelId = 1,false,true,false),
+            ProgramRowItems(programID = 5, programName = "Program 5A", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "5.00", programEnd = "5.50", channelId = 1,false,false,false),
             ProgramRowItems(programID = 6, programName = "Program 6","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "5.50", programEnd = "7.00", channelId = 1,false,false,false),
             ProgramRowItems(programID = 7, programName = "Program 7","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "8.00", programEnd = "9.00", channelId = 1,false,false,false),
             ProgramRowItems(programID = 8, programName = "Program 8","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "9.00", programEnd = "10.00", channelId = 1,false,false,false),
@@ -42,13 +54,13 @@ class MockData {
             ProgramRowItems(programID = 15, programName = "Program 15","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "8.00", programEnd = "9.00", channelId = 1,false,false,false),
 
 
-            ProgramRowItems(programID = 1, programName = "Program 1", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 2,false,false,false),
-            ProgramRowItems(programID = 2, programName = "Program 2","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "2.00", programEnd = "3.00", channelId = 2,false,false,false),
-            ProgramRowItems(programID = 3, programName = "Program 3", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "3.00", programEnd = "4.00", channelId = 2,false,false,false),
-            ProgramRowItems(programID = 4, programName = "Program 4","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "4.00", programEnd = "5.00", channelId = 2,false,false,false),
-            ProgramRowItems(programID = 5, programName = "Program 5", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "5.00", programEnd = "5.50", channelId = 2,false,false,false),
-            ProgramRowItems(programID = 6, programName = "Program 6","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "5.50", programEnd = "7.00", channelId = 2,false,false,false),
-            ProgramRowItems(programID = 7, programName = "Program 7","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "8.00", programEnd = "9.00", channelId = 2,false,false,false),
+            ProgramRowItems(programID = 1, programName = "Program 1B", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 2,false,false,false),
+            ProgramRowItems(programID = 2, programName = "Program 2B","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "2.00", programEnd = "3.00", channelId = 2,false,false,false),
+            ProgramRowItems(programID = 3, programName = "Program 3B", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "3.00", programEnd = "4.00", channelId = 2,false,false,false),
+            ProgramRowItems(programID = 4, programName = "Program 4B","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "4.00", programEnd = "5.00", channelId = 2,false,false,false),
+            ProgramRowItems(programID = 5, programName = "Program 5B", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "5.00", programEnd = "5.50", channelId = 2,false,false,false),
+            ProgramRowItems(programID = 6, programName = "Program 6B","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "5.50", programEnd = "7.00", channelId = 2,false,false,false),
+            ProgramRowItems(programID = 7, programName = "Program 7B","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "8.00", programEnd = "9.00", channelId = 2,false,false,false),
             ProgramRowItems(programID = 8, programName = "Program 8","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "9.00", programEnd = "10.00", channelId = 2,false,false,false),
             ProgramRowItems(programID = 9, programName = "Program 9","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "10.00", programEnd = "11.00", channelId = 2,false,false,false),
             ProgramRowItems(programID = 10, programName = "Program 10","https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "11.00", programEnd = "12.00", channelId = 2,false,false,false),
@@ -196,5 +208,19 @@ class MockData {
 
             )
 
+    }
+
+    fun returnProgramRows( programsList: MutableList<ProgramRowItems>):Int {
+        var numberOfShows =0
+        programsList.forEach {
+            it.programID
+            numberOfShows++
+        }
+
+        return programsList.distinctBy { it.programID }.size
+    }
+
+    fun returnChannelRows(channelsList: MutableList<ChannelRowItems>):Int {
+        return channelsList.distinctBy { it.channelID }.size
     }
 }
