@@ -1,5 +1,5 @@
 [versions]
-agp = "8.4.0-alpha11"
+agp = "8.3.0"
 kotlin = "1.9.0"
 coreKtx = "1.12.0"
 junit = "4.13.2"
@@ -14,6 +14,9 @@ compose-material3 ="1.2.0"
 viewmodel ="2.6.1"
 lifecycleRuntimeCompose = "2.7.0"
 progressindicator ="1.0.0"
+timber="5.0.1"
+joda-time="2.12.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -36,6 +39,9 @@ androidx-material3-compose ={module = "androidx.compose.material3:material3", ve
 androidx-viewmodel = { module ="androidx.lifecycle:lifecycle-viewmodel-compose",version.ref ="viewmodel"}
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 com-github-compose-progress = { module ="com.github.kevinnzou:compose-progressindicator" , version.ref ="progressindicator"}
+androidx-timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+androidx-joda-time= { module = "joda-time:joda-time", version.ref = "joda-time" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

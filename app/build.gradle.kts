@@ -67,6 +67,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.timber)
 
     // Coil
     implementation(libs.coil.compose)
@@ -80,4 +81,6 @@ dependencies {
     implementation(libs.androidx.viewmodel)
 
     implementation(libs.com.github.compose.progress)
+
+    implementation(libs.androidx.joda.time)
 }

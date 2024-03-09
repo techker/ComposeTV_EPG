@@ -80,13 +80,17 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import coil.compose.AsyncImage
 import com.example.composeepg.R
 import com.example.composeepg.data.ChannelRowItems
+import com.example.composeepg.data.EpgData
 import com.example.composeepg.data.MockData
 import com.example.composeepg.data.ProgramRowItems
 import com.example.composeepg.view.HomeScreenUiState
 import com.example.composeepg.view.MainViewModel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Date
 
 @Composable
 fun EpgLayoutContent(mainViewModel: MainViewModel = viewModel()) {
@@ -168,11 +172,27 @@ fun CreateViewV3(
         Color.Blue,
         Color.Transparent
     )
+    //Demo how to calculate TimeBar Start
+    val calendar = Calendar.getInstance()
+    var startTime = EpgData.getStartTimeLookBack(1)
+    val endTime = EpgData.getEndTime()
+    val halfHour = EpgData.getHalfHour()
+    val date = Date(startTime)
+    calendar.time = date
+    val minutes = calendar[Calendar.MINUTE]
+    val diff = 60 - minutes
+    //have only precise time from half and half an hour
+    startTime += diff * 60000
+
+    val timeList = EpgData.generateTimeList(startTime,endTime,halfHour)
+    Timber.tag("TAG").d("Epg Time List is ${timeList.size} - ${timeList.first()}")
+
+    //End
 
     val reducedHours = mutableListOf<String>()
-    val startedAt = "07:00"
+    val startedAt = "01:00"
     val startHour =
-        startedAt.substringBefore(":").toInt()    //put -5 to get the time in East, need adjust
+        startedAt.substringBefore(":").toInt()
 
     // Create list of hours according to requested start time
     for (hour in startHour until startHour + 24) {
@@ -232,9 +252,10 @@ fun CreateViewV3(
     var isOpen by remember { mutableStateOf(false) }
     LaunchedEffect(true) {
         coroutineScope.launch {
-            //   val scrollPosition = 15500 // Adjust itemWidth as needed
-            //    horizontalScrollState.scrollTo(scrollPosition)
-            // Animate scroll to the 10th item
+            //testimng Scroll to position
+            //val scrollPosition = 15500 // Adjust itemWidth as needed
+            //horizontalScrollState.scrollTo(scrollPosition)
+            // Animate scroll to the 5th item
             //lazyListStatePrograms.animateScrollToItem(index = 5)
             //horizontalScrollState.scrollTo(hoursIndex)
             //  horizontalScrollState.animateScrollTo(scrollPosition)
@@ -462,7 +483,7 @@ fun CreateViewV3(
                                         state = verticalScrollState,
                                         orientation = Orientation.Vertical
                                     )
-                                    .border(1.dp, color)
+                                    .border(1.dp, Color.White)
                                     .background(Color.LightGray)
                                     .padding(4.dp),
                                 verticalArrangement = Arrangement.Center
