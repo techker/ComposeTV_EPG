@@ -252,13 +252,13 @@ fun CreateViewV3(
     var isOpen by remember { mutableStateOf(false) }
     LaunchedEffect(true) {
         coroutineScope.launch {
-            //testimng Scroll to position
+            //testing Scroll to position
             //val scrollPosition = 15500 // Adjust itemWidth as needed
             //horizontalScrollState.scrollTo(scrollPosition)
             // Animate scroll to the 5th item
             //lazyListStatePrograms.animateScrollToItem(index = 5)
             //horizontalScrollState.scrollTo(hoursIndex)
-            //  horizontalScrollState.animateScrollTo(scrollPosition)
+            //horizontalScrollState.animateScrollTo(scrollPosition)
         }
     }
     if (isOpen) {
@@ -332,7 +332,7 @@ fun CreateViewV3(
         ) {
             if (focusedProgram != "-1") {
                 val programSelected = MockData().getProgramData(focusedIndexP,focusedIndexCh)
-                Log.d("TAG", "selected = $programSelected")
+                Timber.tag("TAG").d("selected = $programSelected")
                 Text(
                     text = programSelected.programName,
                     modifier = Modifier.padding(20.dp, 10.dp, 0.dp, 0.dp),
@@ -604,7 +604,7 @@ fun CreateViewV3(
                                                         }
                                                         .onFocusChanged { isFocused ->
                                                             if (isFocused.isFocused) {
-                                                                Log.d("TAG", "isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
+                                                                Timber.tag("TAG").d("isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
                                                                 focusedIndex = index + 1
                                                                 focusedIndexP = itemPrg.programID
                                                                 focusedIndexCh = itemPrg.channelId
@@ -626,7 +626,7 @@ fun CreateViewV3(
                                                             .align(Alignment.TopStart)
                                                     )
                                                     Text(
-                                                        text = "${itemPrg.programName}",
+                                                        text = itemPrg.programName,
                                                         color = Color.White
                                                     )
                                                     if (itemPrg.isLookBack) {
@@ -693,10 +693,10 @@ private fun fillGaps(hoursList: MutableList<String>, programsList: Int) {
      * ProgramRowItems(programID = add, programName = "Gaps i", "",programStart = "1.00", programEnd = "2.00", channelId = 1,false,false,false)    }
      */
 
-    Log.d("TAG", "availableHoursLeft = $availableHoursLeft from ${hoursList.size} number of prg $programsList toFill $toFill")
+    Timber.tag("TAG").d("availableHoursLeft = $availableHoursLeft from ${hoursList.size} number of prg $programsList toFill $toFill")
     for (i in programsList until availableHoursLeft) {
         //ProgramRowItems(programID = 1, programName = "Gaps i", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 1,true,true,false)    }
-        Log.d("TAG", "programRowItems  index = $i")
+        Timber.tag("TAG").d( "programRowItems  index = $i")
     }
 }
 
