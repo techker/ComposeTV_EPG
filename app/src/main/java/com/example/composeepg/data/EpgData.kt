@@ -87,6 +87,10 @@ object EpgData {
     fun convertPxToMilliseconds(px: Double, context: Context): Double {
         return TimeUnit.MINUTES.toMillis(1) * px / pxPerMinConstant(context)
     }
+     fun calculateOffset(context: Context):Double {
+        val hour = TimeUnit.HOURS.toMillis(1)
+        return convertMillisecondsToPx((hour / 2).toDouble(),context)
+    }
 
     fun getInitialPositionInList(
         currentTime: Double,

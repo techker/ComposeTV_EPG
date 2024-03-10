@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
@@ -165,6 +166,7 @@ fun CreateViewV3(
     var focusedProgram by remember { mutableStateOf("-1") }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
+    val context = LocalContext.current
     val borderWidth = 1.dp
 
     val gradientColors = listOf(
@@ -184,8 +186,10 @@ fun CreateViewV3(
     //have only precise time from half and half an hour
     startTime += diff * 60000
 
+    val hoursOffset = EpgData.calculateOffset(context)
+
     val timeList = EpgData.generateTimeList(startTime,endTime,halfHour)
-    Timber.tag("TAG").d("Epg Time List is ${timeList.size} - ${timeList.first()}")
+    Timber.tag("TAG").d("Epg Time List is ${timeList.size} - ${timeList.first()} offset $hoursOffset")
 
     //End
 
@@ -574,9 +578,13 @@ fun CreateViewV3(
                                 val allPrograms = MockData().getAllProgramsForChannel(channelID)
                                 allPrograms.forEachIndexed { i, itemPrg ->
 
-                                            val prgStart = itemPrg.programStart
-                                            val prgEnd = itemPrg.programEnd
-
+                                            val prgStart = itemPrg.programStart.toDouble()
+                                            val prgEnd = itemPrg.programEnd.toDouble()
+                                            val pgmTime = (prgStart - prgEnd)
+                                            //get program duration to milliseconds and convert to pixels
+                                            val px = EpgData.convertMillisecondsToPx(
+                                            pgmTime,context).toInt()
+                                            Timber.tag("TAG").d("Program cell PX $px")
                                             /**
                                              * Need to fix according to program time
                                              * Need the width of the hours cell
