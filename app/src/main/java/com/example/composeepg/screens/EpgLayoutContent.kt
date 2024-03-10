@@ -585,6 +585,8 @@ fun CreateViewV3(
                                             val px = EpgData.convertMillisecondsToPx(
                                             pgmTime,context).toInt()
                                             Timber.tag("TAG").d("Program cell PX $px")
+                                             val halfHourWidth = 50.dp.value
+                                             val programWidthDp = (pgmTime * 2 * halfHourWidth).dp
                                             /**
                                              * Need to fix according to program time
                                              * Need the width of the hours cell
