@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
@@ -31,20 +29,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +49,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -66,15 +56,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -218,7 +207,7 @@ fun CreateViewV3(
 
     var hoursIndex = 0
     if (indexReduced != -1) {
-        println("Current time is at index: $indexReduced time ${reducedHours.get(indexReduced)}")
+        println("Current time is at index: $indexReduced time ${reducedHours.get(indexReduced)} offset $hoursOffset")
         hoursIndex = indexReduced
     } else {
         println("Current time not found in the list")
@@ -279,7 +268,7 @@ fun CreateViewV3(
     ) {
         Column {
             if (focusedProgram != "-1") {
-            val programSelected = MockData().getProgramData(focusedIndexP,focusedIndexCh)
+                val programSelected = MockData().getProgramData(focusedIndexP, focusedIndexCh)
                 AsyncImage(
                     model = programSelected.programImage,
                     contentDescription = "image",
@@ -481,7 +470,7 @@ fun CreateViewV3(
                                     .height(cellHeight)
                                     .clip(shape = RoundedCornerShape(15.dp, 0.dp, 0.dp, 15.dp))
                                     .clickable(onClick = {
-                                       isOpen = true
+                                        isOpen = true
                                     })
                                     .scrollable(
                                         state = verticalScrollState,
@@ -580,13 +569,15 @@ fun CreateViewV3(
 
                                             val prgStart = itemPrg.programStart.toDouble()
                                             val prgEnd = itemPrg.programEnd.toDouble()
-                                            val pgmTime = (prgStart - prgEnd)
+                                            val pgmTime = (prgEnd - prgStart)
                                             //get program duration to milliseconds and convert to pixels
                                             val px = EpgData.convertMillisecondsToPx(
                                             pgmTime,context).toInt()
                                             Timber.tag("TAG").d("Program cell PX $px")
+
                                              val halfHourWidth = 50.dp.value
                                              val programWidthDp = (pgmTime * 2 * halfHourWidth).dp
+                                             Log.d("TAG","Program cell PX $px plus half hour $halfHour pgTime $pgmTime programWidthDp $programWidthDp prgStart $prgStart prgEnd $prgEnd")
                                             /**
                                              * Need to fix according to program time
                                              * Need the width of the hours cell
@@ -595,13 +586,13 @@ fun CreateViewV3(
 
                                             Column(
                                                 modifier = Modifier
-                                                    .height(cellHeight)
-                                                    .width(cellWidth.dp)
+                                                    //.height(cellHeight)
+//                                                    .width(programWidthDp)
                                             ) {
                                                 Box(
                                                     modifier = Modifier
                                                         .height(cellHeight)
-                                                        .width(cellWidth.dp)  ///individual with per time
+                                                        .width(programWidthDp)  ///individual with per time
                                                         .drawWithContent {
                                                             drawContent()
                                                             drawLine(
@@ -614,12 +605,15 @@ fun CreateViewV3(
                                                         }
                                                         .onFocusChanged { isFocused ->
                                                             if (isFocused.isFocused) {
-                                                                Timber.tag("TAG").d("isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
+                                                                Timber
+                                                                    .tag("TAG")
+                                                                    .d("isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
                                                                 focusedIndex = index + 1
                                                                 focusedIndexP = itemPrg.programID
                                                                 focusedIndexCh = itemPrg.channelId
                                                                 hasFocusP = true
-                                                                focusedProgram = itemPrg.programID.toString()
+                                                                focusedProgram =
+                                                                    itemPrg.programID.toString()
                                                             }
                                                         }
                                                         .clickable(onClick = { /* Handle click event */ })
@@ -685,6 +679,11 @@ fun CreateViewV3(
 
 }
 
+private fun printDetails(px: Int, programWidthDp: Dp) {
+    Timber.tag("TAG").d("PRINT = $px and $programWidthDp" )
+    Log.d("TAG", "PRINT = $px and $programWidthDp")
+}
+
 private fun fillGaps(hoursList: MutableList<String>, programsList: Int) {
     /**
      * Need to fill the gaps on left over hours that have no programs
@@ -741,7 +740,9 @@ fun LargerDialog(onCardClicked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Card(
-            modifier = Modifier.size(400.dp, 100.dp).clickable(onClick = onCardClicked),
+            modifier = Modifier
+                .size(400.dp, 100.dp)
+                .clickable(onClick = onCardClicked),
 
             colors = CardDefaults.cardColors(
                 containerColor = Color.DarkGray, //Card background color
@@ -799,7 +800,9 @@ fun ClickableImage(resourceId: Int, onClick: () -> Unit) {
         Image(
             painterResource(resourceId),
             contentDescription = "",
-            modifier = Modifier.fillMaxSize().focusable(true)
+            modifier = Modifier
+                .fillMaxSize()
+                .focusable(true)
         )
     }
 }
