@@ -61,7 +61,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,10 +76,13 @@ import com.example.composeepg.view.HomeScreenUiState
 import com.example.composeepg.view.MainViewModel
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.text.SimpleDateFormat
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun EpgLayoutContent(mainViewModel: MainViewModel = viewModel()) {
@@ -161,6 +163,7 @@ fun CreateViewV3(
     val density = LocalDensity.current
     val context = LocalContext.current
     val borderWidth = 1.dp
+    var pxHour = 0
 
     val gradientColors = listOf(
         Color.DarkGray,
@@ -217,6 +220,8 @@ fun CreateViewV3(
     } else {
         println("Current time not found in the list")
     }
+    val hour = TimeUnit.HOURS.toMillis(1)
+    pxHour = EpgData.convertMillisecondsToPx((hour / 2).toDouble(), context).toInt()
 
     LaunchedEffect(lazyListStateMainTable.firstVisibleItemScrollOffset) {
         if (!lazyListStateFirstColumn.isScrollInProgress) {
@@ -240,9 +245,7 @@ fun CreateViewV3(
         )
     }
     val shape = RoundedCornerShape(8.dp)
-
     val bgwColor = MaterialTheme.colorScheme.background
-    val recordColor = MaterialTheme.colorScheme.errorContainer
 
     /**
      * Opens Favorite Dialog
@@ -253,10 +256,8 @@ fun CreateViewV3(
             //testing Scroll to position
             //val scrollPosition = 15500 // Adjust itemWidth as needed
             //horizontalScrollState.scrollTo(scrollPosition)
-            // Animate scroll to the 5th item
             //lazyListStatePrograms.animateScrollToItem(index = 5)
             //horizontalScrollState.scrollTo(hoursIndex)
-            //horizontalScrollState.animateScrollTo(scrollPosition)
         }
     }
     if (isOpen) {
@@ -433,7 +434,7 @@ fun CreateViewV3(
                 Text(
                     text = showTime,
                     modifier = Modifier
-                        .padding(horizontal = 35.dp, vertical = 4.dp)
+                        .padding(horizontal = 40.dp, vertical = 4.dp)
                         .onGloballyPositioned {
                         },
                     color = Color.White
@@ -459,7 +460,6 @@ fun CreateViewV3(
                 itemsIndexed(items = channelsList, key = { _, itemB -> itemB.channelID!! })
 
                 { index, itemC ->
-                    val color = if (itemC.isFavorite) Color.Red else Color.LightGray
                     Box(
                         modifier = Modifier
                             .width(firstColumnWidth)
@@ -493,15 +493,7 @@ fun CreateViewV3(
                                         .fillMaxWidth()
                                         .padding(start = 5.dp)
                                 ) {
-                                    if (itemC.isLocked) {
-                                        Image(
-                                            painterResource(R.drawable.baseline_lock_outline_24),
-                                            contentDescription = "",
-                                            modifier = Modifier
-                                                .width(50.dp)
-                                                .height(50.dp)
-                                        )
-                                    } else {
+
                                         if (itemC.channelLogo.isNotEmpty()) {
                                             AsyncImage(
                                                 model = itemC.channelLogo,
@@ -531,13 +523,22 @@ fun CreateViewV3(
                                         } else {
                                             Text(text = itemC.channelName)
                                         }
-                                    }
                                     Spacer(modifier = Modifier.width(10.dp)) // Add spacing between texts
                                     Text(
                                         text = index.plus(1).toString(),
                                         modifier = Modifier.padding(0.dp, 10.dp, 0.dp, 5.dp),
                                         color = Color.Black
                                     )
+                                    if(itemC.isLocked) {
+                                        Image(
+                                            painterResource(R.drawable.baseline_lock_outline_24),
+                                            contentDescription = "",
+                                            modifier = Modifier
+                                                .padding(start = 5.dp, top = 5.dp)
+                                                .width(25.dp)
+                                                .height(25.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -563,7 +564,6 @@ fun CreateViewV3(
                         contentPadding = PaddingValues(bottom = 8.dp),
                         state = lazyListStateMainTable
                     ) {
-                        //TODO fill Gaps with empty programs and cell Size.
                         itemsIndexed(items = channelsList) { index, item ->
                             if (index == channelsList.size) {
                                 listCompleted = true
@@ -572,26 +572,23 @@ fun CreateViewV3(
 
                             Row {
                                 val allPrograms = MockData().getAllProgramsForChannel(channelID)
-                                allPrograms.forEachIndexed { i, itemPrg ->
+                                allPrograms.forEachIndexed { _, itemPrg ->
+                                    val convertedStart = convertStartToTime(itemPrg.programStart)
+                                    val convertedEnd = convertEndToTime(itemPrg.programEnd)
+                                    val roundedStartTime = EpgData.getNearestHalfHour(convertedStart)
+                                    val roundedEndTime = EpgData.getRoundedTimetoNearestPastHalfHour(convertedEnd)
+                                    val pgmTimes = (roundedEndTime - roundedStartTime)
+                                    val pxx = EpgData.convertMillisecondsToPx(pgmTimes.toDouble(),context
+                                    ).toInt()
 
-                                    val prgStart = itemPrg.programStart.toDouble()
-                                    val prgEnd = itemPrg.programEnd.toDouble()
-                                    val pgmTime = (prgEnd - prgStart)
-                                    //get program duration to milliseconds and convert to pixels
-                                    val px =
-                                        EpgData.convertMillisecondsToPx(pgmTime, context).toInt()
-                                    val halfHourWidth = 40.dp.value
-                                    val programWidthDp = (pgmTime * 10 * halfHourWidth).dp
-
-                                    Timber.tag("TAG").d("Program " + itemPrg.programName + "  pgTime " + pgmTime + " programWidthDp " + programWidthDp + " prgStart " + prgStart + " prgEnd " + prgEnd)
-
+                                    Log.d("TAG","Program  width $pxx "  + itemPrg.programName + "  pgTime " + pgmTimes + " or pgmTimes $pgmTimes  prgStart " + convertedStart + " prgEnd " + convertedEnd)
                                     Column(
                                         modifier = Modifier
                                     ) {
                                         Box(
                                             modifier = Modifier
                                                 .height(cellHeight)
-                                                .width(programWidthDp)  ///individual with per time
+                                                .width(pxx.dp)  ///individual with per time
                                                 .drawWithContent {
                                                     drawContent()
                                                     drawLine(
@@ -664,7 +661,6 @@ fun CreateViewV3(
                                                     )
                                                 }
                                             }
-
                                         }
                                     }
                                 }
@@ -678,35 +674,54 @@ fun CreateViewV3(
 
 }
 
-private fun printDetails(px: Int, programWidthDp: Dp) {
-    Timber.tag("TAG").d("PRINT = $px and $programWidthDp")
-    Log.d("TAG", "PRINT = $px and $programWidthDp")
+fun convertStartToTime(start:String):Long{
+    val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+    val today = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    return try {
+        val datePart = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(today.time)
+        val formattedTimeStart = formatTime(start).replace(".", ":")
+        val startTime = format.parse("$datePart $formattedTimeStart")
+        startTime?.time ?: -1L
+    } catch (e: Exception) {
+        Log.d("TAG", "Converted start Error ${e.message}")
+        -1L // Return a default value indicating failure
+    }
+}
+fun convertEndToTime(end:String):Long{
+    val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+    val today = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    return try {
+        val datePart = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(today.time)
+        val formattedTimeEnd = formatTime(end).replace(".", ":")
+        val endTime = format.parse("$datePart $formattedTimeEnd")
+        endTime?.time ?: -1L
+    } catch (e: Exception) {
+        Log.d("TAG","Converted start Error ${e.message}")
+        -1L // Return a default value indicating failure
+    }
 }
 
-private fun fillGaps(hoursList: MutableList<String>, programsList: Int) {
-    /**
-     * Need to fill the gaps on left over hours that have no programs
-     * hours list - programs list
-     * need programs id and add left over.
-     * divide hours / 2 since you have half hours
-     * Number of channels
-     * number of shows per channel
-     */
-    val availableHoursLeft = (hoursList.size / 2) //Divide by 2 to remove the half hours
-    val toFill = availableHoursLeft - programsList //Number of programs to fill
-
-    /**
-     * Need to fill the gaps on left over hours that have no programs
-     * and associate channel to programs
-     * ProgramRowItems(programID = add, programName = "Gaps i", "",programStart = "1.00", programEnd = "2.00", channelId = 1,false,false,false)    }
-     */
-
-    Timber.tag("TAG")
-        .d("availableHoursLeft = $availableHoursLeft from ${hoursList.size} number of prg $programsList toFill $toFill")
-    for (i in programsList until availableHoursLeft) {
-        //ProgramRowItems(programID = 1, programName = "Gaps i", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 1,true,true,false)    }
-        Timber.tag("TAG").d("programRowItems  index = $i")
-    }
+/**
+ * Using this since the Mock is set as 1.00
+ */
+fun formatTime(time: String): String {
+    // Split the time string by the dot to separate hours and minutes
+    val parts = time.split(".")
+    // Check if the hour part (before the dot) consists of a single digit
+    val hours = parts[0]
+    val formattedHours = if (hours.length == 1) "0$hours" else hours
+    // Reconstruct the time string with the formatted hours
+    return "$formattedHours.${parts[1]}"
 }
 
 @Composable
@@ -730,6 +745,9 @@ fun IndeterminateCircularProgressBarDemo() {
     }
 }
 
+/**
+ * Dialog for Fav
+ */
 @Composable
 fun LargerDialog(onCardClicked: () -> Unit) {
 
@@ -781,13 +799,9 @@ fun LargerDialog(onCardClicked: () -> Unit) {
                     resourceId = R.drawable.baseline_favorite_24,
                     onClick = { /* Handle click event for this image */ }
                 )
-
             }
-
         }
-
     }
-
 }
 
 @Composable

@@ -8,6 +8,7 @@ import java.util.Collections
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
+import kotlin.math.floor
 
 object EpgData {
 
@@ -91,7 +92,12 @@ object EpgData {
         val hour = TimeUnit.HOURS.toMillis(1)
         return convertMillisecondsToPx((hour / 2).toDouble(),context)
     }
-
+    fun getNearestHalfHour(timeMs: Long): Long {
+        return Math.round(timeMs.toDouble() / (30 * 60 * 1000)) * (30 * 60 * 1000) // use Math.round to get nearest rounded previous/next half hour from the given time.
+    }
+    fun getRoundedTimetoNearestPastHalfHour(timeMs: Long): Long {
+        return (floor(timeMs.toDouble() / (30 * 60 * 1000)) * (30 * 60 * 1000)).toLong() // use Math.floor to get nearest past half hour from the given time.
+    }
     fun getInitialPositionInList(
         currentTime: Double,
         arrayList: ArrayList<BaseProgramModel>
