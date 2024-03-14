@@ -86,6 +86,7 @@ import java.util.Date
 fun EpgLayoutContent(mainViewModel: MainViewModel = viewModel()) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     var isOpen by remember { mutableStateOf(true) }
+
     /**
      * Create Hours with Half Hour
      */
@@ -110,10 +111,12 @@ fun EpgLayoutContent(mainViewModel: MainViewModel = viewModel()) {
                 Log.d("TAG", "onScroll : scrollable = $scrollable, scrollToFirst = $scrollToFirst")
             }, s.channelList, programsList, hoursList)
         }
-        is HomeScreenUiState.Loading ->  IndeterminateCircularProgressBarDemo()
+
+        is HomeScreenUiState.Loading -> IndeterminateCircularProgressBarDemo()
         is HomeScreenUiState.Error -> Error()
     }
 }
+
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun Error(modifier: Modifier = Modifier) {
@@ -125,6 +128,7 @@ private fun Error(modifier: Modifier = Modifier) {
         androidx.tv.material3.Text(text = "Whoops, something went wrong.", modifier = modifier)
     }
 }
+
 @Composable
 fun CreateViewV3(
     onVerticalScroll: (Boolean, Boolean) -> Unit,
@@ -177,8 +181,9 @@ fun CreateViewV3(
 
     val hoursOffset = EpgData.calculateOffset(context)
 
-    val timeList = EpgData.generateTimeList(startTime,endTime,halfHour)
-    Timber.tag("TAG").d("Epg Time List is ${timeList.size} - ${timeList.first()} offset $hoursOffset")
+    val timeList = EpgData.generateTimeList(startTime, endTime, halfHour)
+    Timber.tag("TAG")
+        .d("Epg Time List is ${timeList.size} - ${timeList.first()} offset $hoursOffset")
 
     //End
 
@@ -324,7 +329,7 @@ fun CreateViewV3(
                 .padding(start = 230.dp)
         ) {
             if (focusedProgram != "-1") {
-                val programSelected = MockData().getProgramData(focusedIndexP,focusedIndexCh)
+                val programSelected = MockData().getProgramData(focusedIndexP, focusedIndexCh)
                 Timber.tag("TAG").d("selected = $programSelected")
                 Text(
                     text = programSelected.programName,
@@ -358,7 +363,7 @@ fun CreateViewV3(
                     .background(Color.White)
                     .align(Alignment.CenterHorizontally),
 
-            )
+                )
 
         }
         Column(
@@ -368,14 +373,16 @@ fun CreateViewV3(
         ) {
             if (focusedProgram != "-1") {
                 val channelData = MockData().getChannelData(focusedIndexCh)
-                val programSelected = MockData().getProgramData(focusedIndexP,focusedIndexCh)
+                val programSelected = MockData().getProgramData(focusedIndexP, focusedIndexCh)
                 Text(
-                    text = programSelected.programStart.plus(" - ").plus(programSelected.programEnd),
+                    text = programSelected.programStart.plus(" - ")
+                        .plus(programSelected.programEnd),
                     modifier = Modifier.padding(0.dp, 10.dp, 200.dp, 0.dp),
                     color = Color.White
                 )
                 Text(
-                    text = channelData.channelID.toString().plus(" - ").plus(channelData.channelName),
+                    text = channelData.channelID.toString().plus(" - ")
+                        .plus(channelData.channelName),
                     modifier = Modifier.padding(0.dp, 20.dp, 200.dp, 0.dp),
                     color = Color.White
                 )
@@ -405,7 +412,7 @@ fun CreateViewV3(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(state = horizontalScrollState)
-                .padding(start = 60.dp, bottom = 20.dp)
+                .padding(start = 90.dp, bottom = 20.dp)
                 .onGloballyPositioned {
                     componentWidth = with(density) {
                         it.size.width.toDp()
@@ -426,7 +433,7 @@ fun CreateViewV3(
                 Text(
                     text = showTime,
                     modifier = Modifier
-                        .padding(horizontal = 60.dp, vertical = 4.dp)
+                        .padding(horizontal = 35.dp, vertical = 4.dp)
                         .onGloballyPositioned {
                         },
                     color = Color.White
@@ -567,107 +574,99 @@ fun CreateViewV3(
                                 val allPrograms = MockData().getAllProgramsForChannel(channelID)
                                 allPrograms.forEachIndexed { i, itemPrg ->
 
-                                            val prgStart = itemPrg.programStart.toDouble()
-                                            val prgEnd = itemPrg.programEnd.toDouble()
-                                            val pgmTime = (prgEnd - prgStart)
-                                            //get program duration to milliseconds and convert to pixels
-                                            val px = EpgData.convertMillisecondsToPx(
-                                            pgmTime,context).toInt()
-                                            Timber.tag("TAG").d("Program cell PX $px")
+                                    val prgStart = itemPrg.programStart.toDouble()
+                                    val prgEnd = itemPrg.programEnd.toDouble()
+                                    val pgmTime = (prgEnd - prgStart)
+                                    //get program duration to milliseconds and convert to pixels
+                                    val px =
+                                        EpgData.convertMillisecondsToPx(pgmTime, context).toInt()
+                                    val halfHourWidth = 40.dp.value
+                                    val programWidthDp = (pgmTime * 10 * halfHourWidth).dp
 
-                                             val halfHourWidth = 50.dp.value
-                                             val programWidthDp = (pgmTime * 2 * halfHourWidth).dp
-                                             Log.d("TAG","Program cell PX $px plus half hour $halfHour pgTime $pgmTime programWidthDp $programWidthDp prgStart $prgStart prgEnd $prgEnd")
-                                            /**
-                                             * Need to fix according to program time
-                                             * Need the width of the hours cell
-                                             */
-                                            val cellWidth = 320 //60min
+                                    Timber.tag("TAG").d("Program " + itemPrg.programName + "  pgTime " + pgmTime + " programWidthDp " + programWidthDp + " prgStart " + prgStart + " prgEnd " + prgEnd)
 
+                                    Column(
+                                        modifier = Modifier
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .height(cellHeight)
+                                                .width(programWidthDp)  ///individual with per time
+                                                .drawWithContent {
+                                                    drawContent()
+                                                    drawLine(
+                                                        color = Color.Black,
+                                                        start = Offset(0f, 0f),
+                                                        end = Offset(size.width, 0f),
+                                                        strokeWidth = borderWidth.toPx(),
+                                                        cap = StrokeCap.Square
+                                                    )
+                                                }
+                                                .onFocusChanged { isFocused ->
+                                                    if (isFocused.isFocused) {
+                                                        Timber
+                                                            .tag("TAG")
+                                                            .d("isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
+                                                        focusedIndex = index + 1
+                                                        focusedIndexP = itemPrg.programID
+                                                        focusedIndexCh = itemPrg.channelId
+                                                        hasFocusP = true
+                                                        focusedProgram =
+                                                            itemPrg.programID.toString()
+                                                    }
+                                                }
+                                                .clickable(onClick = { /* Handle click event */ })
+                                                .focusable(true)
+                                                .focusRequester(focusRequesterPrg),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Divider(
+                                                color = Color.Black,
+                                                thickness = 1.dp,
+                                                modifier = Modifier
+                                                    .fillMaxHeight()
+                                                    .width(1.dp)
+                                                    .align(Alignment.TopStart)
+                                            )
+                                            Text(
+                                                text = itemPrg.programName,
+                                                color = Color.White
+                                            )
+                                            if (itemPrg.isLookBack) {
+                                                Column(
+                                                    modifier = Modifier
+                                                        .padding(top = 30.dp)
+                                                        .align(Alignment.CenterStart)
+                                                ) {
+                                                    Image(
+                                                        painterResource(R.drawable.reset),
+                                                        contentDescription = "",
+                                                        modifier = Modifier
+                                                            .width(30.dp)
+                                                            .align(Alignment.Start)
+                                                            .padding(start = 20.dp)
+                                                    )
+                                                }
+                                            }
                                             Column(
                                                 modifier = Modifier
-                                                    //.height(cellHeight)
-//                                                    .width(programWidthDp)
+                                                    .padding(end = 0.dp, top = 30.dp)
+                                                    .align(Alignment.CenterEnd)
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .height(cellHeight)
-                                                        .width(programWidthDp)  ///individual with per time
-                                                        .drawWithContent {
-                                                            drawContent()
-                                                            drawLine(
-                                                                color = Color.Black,
-                                                                start = Offset(0f, 0f),
-                                                                end = Offset(size.width, 0f),
-                                                                strokeWidth = borderWidth.toPx(),
-                                                                cap = StrokeCap.Square
-                                                            )
-                                                        }
-                                                        .onFocusChanged { isFocused ->
-                                                            if (isFocused.isFocused) {
-                                                                Timber
-                                                                    .tag("TAG")
-                                                                    .d("isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
-                                                                focusedIndex = index + 1
-                                                                focusedIndexP = itemPrg.programID
-                                                                focusedIndexCh = itemPrg.channelId
-                                                                hasFocusP = true
-                                                                focusedProgram =
-                                                                    itemPrg.programID.toString()
-                                                            }
-                                                        }
-                                                        .clickable(onClick = { /* Handle click event */ })
-                                                        .focusable(true)
-                                                        .focusRequester(focusRequesterPrg),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Divider(
-                                                        color = Color.Black,
-                                                        thickness = 1.dp,
+                                                if (itemPrg.isRecording) {
+                                                    Image(
+                                                        painterResource(R.drawable.ic_record),
+                                                        contentDescription = "",
                                                         modifier = Modifier
-                                                            .fillMaxHeight()
-                                                            .width(1.dp)
-                                                            .align(Alignment.TopStart)
+                                                            .width(30.dp)
+                                                            .align(Alignment.Start)
+                                                            .padding(end = 20.dp)
                                                     )
-                                                    Text(
-                                                        text = itemPrg.programName,
-                                                        color = Color.White
-                                                    )
-                                                    if (itemPrg.isLookBack) {
-                                                        Column(
-                                                            modifier = Modifier
-                                                                .padding(start = 30.dp)
-                                                                .align(Alignment.CenterStart)
-                                                        ) {
-                                                            Image(
-                                                                painterResource(R.drawable.reset),
-                                                                contentDescription = "",
-                                                                modifier = Modifier
-                                                                    .width(30.dp)
-                                                                    .align(Alignment.Start)
-                                                                    .padding(start = 20.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    Column(
-                                                        modifier = Modifier
-                                                            .padding(end = 0.dp)
-                                                            .align(Alignment.CenterEnd)
-                                                    ) {
-                                                        if (itemPrg.isRecording) {
-                                                            Image(
-                                                                painterResource(R.drawable.ic_record),
-                                                                contentDescription = "",
-                                                                modifier = Modifier
-                                                                    .width(30.dp)
-                                                                    .align(Alignment.Start)
-                                                                    .padding(end = 20.dp)
-                                                            )
-                                                        }
-                                                    }
-
+                                                }
                                             }
+
                                         }
+                                    }
                                 }
                             }
                         }
@@ -680,7 +679,7 @@ fun CreateViewV3(
 }
 
 private fun printDetails(px: Int, programWidthDp: Dp) {
-    Timber.tag("TAG").d("PRINT = $px and $programWidthDp" )
+    Timber.tag("TAG").d("PRINT = $px and $programWidthDp")
     Log.d("TAG", "PRINT = $px and $programWidthDp")
 }
 
@@ -702,10 +701,11 @@ private fun fillGaps(hoursList: MutableList<String>, programsList: Int) {
      * ProgramRowItems(programID = add, programName = "Gaps i", "",programStart = "1.00", programEnd = "2.00", channelId = 1,false,false,false)    }
      */
 
-    Timber.tag("TAG").d("availableHoursLeft = $availableHoursLeft from ${hoursList.size} number of prg $programsList toFill $toFill")
+    Timber.tag("TAG")
+        .d("availableHoursLeft = $availableHoursLeft from ${hoursList.size} number of prg $programsList toFill $toFill")
     for (i in programsList until availableHoursLeft) {
         //ProgramRowItems(programID = 1, programName = "Gaps i", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 1,true,true,false)    }
-        Timber.tag("TAG").d( "programRowItems  index = $i")
+        Timber.tag("TAG").d("programRowItems  index = $i")
     }
 }
 
@@ -718,11 +718,11 @@ fun IndeterminateCircularProgressBarDemo() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .clip(CircleShape)
-                        .shadow(elevation = 12.dp, shape = CircleShape, clip = true)
-                        .border(2.dp, Color.White, CircleShape),
+            modifier = Modifier
+                .size(200.dp)
+                .clip(CircleShape)
+                .shadow(elevation = 12.dp, shape = CircleShape, clip = true)
+                .border(2.dp, Color.White, CircleShape),
             painter = painterResource(id = R.drawable.default_card),
             contentScale = ContentScale.FillBounds,
             contentDescription = "Splash Screen",
@@ -748,7 +748,7 @@ fun LargerDialog(onCardClicked: () -> Unit) {
                 containerColor = Color.DarkGray, //Card background color
                 contentColor = Color.White  //Card content color,e.g.text
             )
-        ){
+        ) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -788,7 +788,8 @@ fun LargerDialog(onCardClicked: () -> Unit) {
 
     }
 
-    }
+}
+
 @Composable
 fun ClickableImage(resourceId: Int, onClick: () -> Unit) {
     Box(
@@ -806,6 +807,7 @@ fun ClickableImage(resourceId: Int, onClick: () -> Unit) {
         )
     }
 }
+
 @Composable
 fun CardDialog(onDismiss: () -> Unit) {
     Dialog(
@@ -820,20 +822,21 @@ fun CardDialog(onDismiss: () -> Unit) {
                 contentColor = Color.White
             )
         ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .clickable { onDismiss() },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ClickableImage(
-                        resourceId = R.drawable.baseline_favorite_24,
-                        onClick = { onDismiss() }
-                    )
-                }
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .clickable { onDismiss() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ClickableImage(
+                    resourceId = R.drawable.baseline_favorite_24,
+                    onClick = { onDismiss() }
+                )
             }
+        }
     }
 }
+
 @Composable
 @Preview(device = Devices.TV_1080p)
 fun EpgLayoutContentPreview() {
