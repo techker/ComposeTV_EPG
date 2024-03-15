@@ -41,6 +41,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -164,7 +166,7 @@ fun CreateViewV3(
     val context = LocalContext.current
     val borderWidth = 1.dp
     var pxHour = 0
-
+    val sharedLazyListState = rememberLazyListState()
     val gradientColors = listOf(
         Color.DarkGray,
         Color.Blue,
@@ -185,8 +187,7 @@ fun CreateViewV3(
     val hoursOffset = EpgData.calculateOffset(context)
 
     val timeList = EpgData.generateTimeList(startTime, endTime, halfHour)
-    Timber.tag("TAG")
-        .d("Epg Time List is ${timeList.size} - ${timeList.first()} offset $hoursOffset")
+
 
     //End
 
@@ -223,41 +224,55 @@ fun CreateViewV3(
     val hour = TimeUnit.HOURS.toMillis(1)
     pxHour = EpgData.convertMillisecondsToPx((hour / 2).toDouble(), context).toInt()
 
-    LaunchedEffect(lazyListStateMainTable.firstVisibleItemScrollOffset) {
-        if (!lazyListStateFirstColumn.isScrollInProgress) {
-            lazyListStateFirstColumn.scrollToItem(
-                lazyListStateMainTable.firstVisibleItemIndex,
-                lazyListStateMainTable.firstVisibleItemScrollOffset
-            )
+    val adjustScrollState = remember { mutableStateOf(true) }
+    /**
+     * Channels rows
+     * This logic initiates a scroll adjustment when the snapshot flow detects that the last visible item index is within a certain range of the total item count,
+     * suggesting that the user is near or at the end of the list but the last item might not be fully visible.
+     * What i can find to fix the issue that when you scroll down to last program the channel row fallows.
+     */
+
+    LaunchedEffect(sharedLazyListState.isScrollInProgress) {
+        if (sharedLazyListState.isScrollInProgress) {
+            adjustScrollState.value = true
         }
     }
 
-    LaunchedEffect(lazyListStateFirstColumn.firstVisibleItemScrollOffset) {
-        if (!lazyListStateMainTable.isScrollInProgress) {
-            lazyListStateMainTable.scrollToItem(
-                lazyListStateFirstColumn.firstVisibleItemIndex,
-                lazyListStateFirstColumn.firstVisibleItemScrollOffset
-            )
-        }
-        onVerticalScroll(
-            lazyListStateFirstColumn.isScrollInProgress,
-            lazyListStateFirstColumn.firstVisibleItemIndex <= 1
-        )
+    LaunchedEffect(key1 = sharedLazyListState) {
+        snapshotFlow { sharedLazyListState.layoutInfo.visibleItemsInfo }
+            .collect { visibleItems ->
+                val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: return@collect
+                val totalItemCount = sharedLazyListState.layoutInfo.totalItemsCount
+
+                // Determine if we are close to the end and need to adjust.
+                val nearEnd = lastVisibleItemIndex >= totalItemCount - 2
+
+                if (nearEnd && adjustScrollState.value && !sharedLazyListState.isScrollInProgress) {
+                    coroutineScope.launch {
+                        sharedLazyListState.scrollToItem(index = totalItemCount - 1)
+                        adjustScrollState.value = false // Prevent further adjustments until reset.
+                    }
+                }
+            }
     }
+
+    //Debug logs for Offset
+    //Channels Size: 220 x 720, Position: Offset(40.0, 360.0)
+    //First Vissible View Programs Size : 10080 x 720, Position: Offset(260.0, 360.0)
+    //Scrolling right  Programs Size : 10080 x 720, Position: Offset(0.0, 360.0)
+    //Scrolling down Programs Size : 10080 x 720, Position: Offset(-240.0, 360.0)
     val shape = RoundedCornerShape(8.dp)
     val bgwColor = MaterialTheme.colorScheme.background
 
+    val scrollPosition = (hoursOffset - 30) * hoursIndex
+        Log.d("TAG","Epg Time List is ${timeList.size} - ${timeList.first()} offset $hoursOffset scrollPosition $scrollPosition")
     /**
      * Opens Favorite Dialog
      */
     var isOpen by remember { mutableStateOf(false) }
     LaunchedEffect(true) {
         coroutineScope.launch {
-            //testing Scroll to position
-            //val scrollPosition = 15500 // Adjust itemWidth as needed
-            //horizontalScrollState.scrollTo(scrollPosition)
-            //lazyListStatePrograms.animateScrollToItem(index = 5)
-            //horizontalScrollState.scrollTo(hoursIndex)
+            horizontalScrollState.scrollTo(scrollPosition.toInt())
         }
     }
     if (isOpen) {
@@ -452,7 +467,7 @@ fun CreateViewV3(
                     .padding(start = 20.dp, top = 30.dp)
                     .wrapContentSize(),
                 contentPadding = PaddingValues(bottom = 8.dp),
-                state = lazyListStateFirstColumn,
+                state = sharedLazyListState,
             ) {
                 /**
                  * Channels
@@ -552,17 +567,13 @@ fun CreateViewV3(
                 modifier = Modifier
                     .wrapContentSize()
                     .background(Color.Transparent)
+                    .horizontalScroll(state = horizontalScrollState)
                     .padding(top = 30.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .horizontalScroll(state = horizontalScrollState)
-                ) {
                     LazyColumn(
                         modifier = Modifier.wrapContentSize(),
                         contentPadding = PaddingValues(bottom = 8.dp),
-                        state = lazyListStateMainTable
+                        state = sharedLazyListState
                     ) {
                         itemsIndexed(items = channelsList) { index, item ->
                             if (index == channelsList.size) {
@@ -579,9 +590,15 @@ fun CreateViewV3(
                                     val roundedEndTime = EpgData.getRoundedTimetoNearestPastHalfHour(convertedEnd)
                                     val pgmTimes = (roundedEndTime - roundedStartTime)
                                     val pxx = EpgData.convertMillisecondsToPx(pgmTimes.toDouble(),context
-                                    ).toInt()
+                                    ).toInt() / 2
 
-                                    Log.d("TAG","Program  width $pxx "  + itemPrg.programName + "  pgTime " + pgmTimes + " or pgmTimes $pgmTimes  prgStart " + convertedStart + " prgEnd " + convertedEnd)
+                                    /**
+                                     * 3600000 1h current- 480  2x   should be-240
+                                     * 1800000 1/2h    -240 1x                -120
+                                     * 7200000 2h      960  4x
+                                     * 10800000 3h
+                                     */
+                                    Log.d("TAG","Program  width $pxx "  + itemPrg.programName +  " or pgmTimes $pgmTimes  prgStart " + convertedStart + " prgEnd " + convertedEnd)
                                     Column(
                                         modifier = Modifier
                                     ) {
@@ -601,9 +618,6 @@ fun CreateViewV3(
                                                 }
                                                 .onFocusChanged { isFocused ->
                                                     if (isFocused.isFocused) {
-                                                        Timber
-                                                            .tag("TAG")
-                                                            .d("isFocused = $index program id = ${itemPrg.programID} channel id $channelID or program ${itemPrg.channelId}")
                                                         focusedIndex = index + 1
                                                         focusedIndexP = itemPrg.programID
                                                         focusedIndexCh = itemPrg.channelId
@@ -670,8 +684,6 @@ fun CreateViewV3(
                 }
             }
         }
-    }
-
 }
 
 fun convertStartToTime(start:String):Long{
