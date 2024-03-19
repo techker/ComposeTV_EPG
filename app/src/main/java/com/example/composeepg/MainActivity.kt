@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
+import com.example.composeepg.screens.EpgLayoutContentV1
 import com.example.composeepg.screens.EpgLayoutContentV2
 import com.example.composeepg.screens.EpgLayoutContentV3
 import com.example.composeepg.ui.theme.ComposeEpgTheme
@@ -35,7 +36,13 @@ class MainActivity : ComponentActivity() {
                         .wrapContentSize()
                         .background(MaterialTheme.colorScheme.surface)
                 ) {
-                    EpgLayoutContentV3()
+                    /**
+                     *
+                     * V1  EpgLayoutContentV1()
+                     * V2  EpgLayoutContentV2()
+                     * V3  EpgLayoutContentV3()
+                     */
+                    EpgLayoutContentV1()
                 }
             }
         }

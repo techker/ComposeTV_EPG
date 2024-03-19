@@ -14,11 +14,15 @@ Feel free to use it or improve.
 4. Programs replay icon
 5. Program Recording icon
   
+# V1 DarkGray
 
+![screenshot](first_look_v1.png)
+
+# V1 Background Color
 
 ![screenshot](first_look.png)
 
-# V2 Style
+# V3 Bottom Details mini view
 
 ![screenshot](first_look_v2_style.png)
 
