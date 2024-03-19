@@ -7,15 +7,12 @@ This repo is to test how it can be done
 Feel free to use it or improve.
 
 
-
-
-
-
- #Features
+## Features
  Scroll Handling
  Dialogs -> On Program Click Show Recording Dialog 
  Channel Lock or Fav Icons
  Programs replay icon
  Program Recording icon
+
 
 
