@@ -18,3 +18,7 @@ Feel free to use it or improve.
 
 ![screenshot](first_look.png)
 
+# V2 Style
+
+![screenshot](first_look_v2_style.png)
+
