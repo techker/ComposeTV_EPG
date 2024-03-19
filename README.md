@@ -14,5 +14,5 @@ Feel free to use it or improve.
  Programs replay icon
  Program Recording icon
 
-
+![screenshot](first_look.png)
 
