@@ -55,6 +55,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -187,6 +188,7 @@ fun CreateViewV4(
      */
 
     LaunchedEffect(sharedLazyListState.isScrollInProgress) {
+        Log.d("TAG","LaunchedEffect 1 ${sharedLazyListState.isScrollInProgress}")
         if (sharedLazyListState.isScrollInProgress) {
             adjustScrollState.value = true
         }
@@ -195,6 +197,7 @@ fun CreateViewV4(
     LaunchedEffect(key1 = sharedLazyListState) {
         snapshotFlow { sharedLazyListState.layoutInfo.visibleItemsInfo }
             .collect { visibleItems ->
+
                 val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: return@collect
                 val totalItemCount = sharedLazyListState.layoutInfo.totalItemsCount
 
@@ -207,6 +210,7 @@ fun CreateViewV4(
                         adjustScrollState.value = false // Prevent further adjustments until reset.
                     }
                 }
+                Log.d("TAG","LaunchedEffect 2 ${lastVisibleItemIndex} totalItemCount $totalItemCount")
             }
     }
     val shape = RoundedCornerShape(8.dp)
@@ -222,14 +226,14 @@ fun CreateViewV4(
      */
     val scrollTo = mainViewModel.timeNowPosition
     val timeWasSetPosition by remember { mutableStateOf(mainViewModel.isPositionSet) }
-    if(timeWasSetPosition.value == true){
-        Log.d("TAG","Scroll to $scrollTo")
-        LaunchedEffect(true) {
-            coroutineScope.launch {
-               // horizontalScrollState.scrollTo(scrollTo.toInt())
-            }
-        }
-    }
+//    if(timeWasSetPosition.value == true){
+//        Log.d("TAG","Scroll to $scrollTo")
+//        LaunchedEffect(true) {
+//            coroutineScope.launch {
+//               // horizontalScrollState.scrollTo(scrollTo.toInt())
+//            }
+//        }
+//    }
 
     if (isOpen) {
         CardDialog(onDismiss = { isOpen = false })
@@ -426,6 +430,7 @@ fun CreateViewV4(
                                 listCompleted = true
                             }
                             val programs = MockData().getAllProgramsForChannel(item.channelID)
+                            Log.d("TAG","Program data size ${programs.size} ID ${item.channelID}")
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 programs.forEachIndexed { _, program ->
 
@@ -607,9 +612,23 @@ fun timeStringToMinutes(time: String): Int {
 
 @Composable
 fun HourItem(hour: String, index: Int, mainViewModel: MainViewModel, hoursIndex: Int) {
+    val density = LocalDensity.current
     var now = false
     var offsetFloat =0f
-    val minuteOffset = EpgData.getHalfHour()
+    val currentTime = LocalTime.now()
+    val minuteOffset = currentTime.minute
+    val hourSlotWidthDp = 80.dp // Assuming each hour slot is 120.dp wide
+
+    // Use the density to convert DP to pixel values
+    val slotWidthPx = with(density) { hourSlotWidthDp.toPx() }
+    val strokeWidthPx = with(density) { 2.dp.toPx() }
+    // Calculate the fraction of the hour that has passed
+    // Calculate the x position of the line in pixels
+    val proportionOfHourPassed = minuteOffset / 60f
+    val linePosition = slotWidthPx * proportionOfHourPassed
+
+    val textHeightApprox = with(density) { 20.dp.toPx() }
+    val linePositionY =80 - textHeightApprox + with(density) { 4.dp.toPx() } // Adjust the 4.dp offset as needed
 
     if (index == hoursIndex) { now = true }
     if (index == 0) {
@@ -638,20 +657,19 @@ fun HourItem(hour: String, index: Int, mainViewModel: MainViewModel, hoursIndex:
                         mainViewModel.isPositionSet.postValue(true)
                     }
                     mainViewModel.startTimePositions[hour] = positionInRoot.x -60
-                    offsetFloat =positionInRoot.x
-                }
-                .drawBehind {
-                    if (now) {
-                        val slotWidth = size.width
-                        val linePosition = slotWidth * (minuteOffset / 60f) // Calculate the position based on the minute offset
-                        drawLine(
-                            Color.Blue,
-                            start = Offset(x = offsetFloat, y = size.height),
-                            end = Offset(x = offsetFloat + 10, y = size.height - 4.dp.toPx()),
-                            strokeWidth = 2.dp.toPx()
-                        )
-                    }
+                    offsetFloat =positionInRoot.x - 80
                 },
+            // Testing to draw a line with time elapsed
+//                .drawBehind {
+//                    if (now) {
+//                        drawLine(
+//                        color = Color.Blue,
+//                        start = Offset(x = offsetFloat, y = linePositionY),
+//                        end = Offset(x = linePosition, y = linePositionY),
+//                        strokeWidth = strokeWidthPx,
+//                        )
+//                    }
+//                },
             color = Color.White
         )
     }
