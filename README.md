@@ -8,11 +8,13 @@ Feel free to use it or improve.
 
 
 ## Features
- Scroll Handling
- Dialogs -> On Program Click Show Recording Dialog 
- Channel Lock or Fav Icons
- Programs replay icon
- Program Recording icon
+1. Scroll Handling
+2. Dialogs -> On Program Click Show Recording Dialog
+3. Channel Lock or Fav Icons
+4. Programs replay icon
+5. Program Recording icon
+  
+
 
 ![screenshot](first_look.png)
 
