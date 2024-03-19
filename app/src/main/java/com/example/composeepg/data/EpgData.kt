@@ -3,6 +3,8 @@ package com.example.composeepg.data
 import android.content.Context
 import android.util.TypedValue
 import com.example.composeepg.R
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Collections
 import java.util.Date
@@ -62,6 +64,20 @@ object EpgData {
             i += halfHour
         }
         return timelineList
+    }
+
+    fun convertStringToTime(timeString: String): LocalTime {
+        // Replace the dot with a colon to get a standard time format
+        val standardTimeString = timeString.replace(".", ":")
+        // Parse the string into a LocalTime object
+        // Assuming the time string is in a format like "H:mm"
+        val formatter = DateTimeFormatter.ofPattern("H:mm")
+        return LocalTime.parse(standardTimeString, formatter)
+    }
+
+    fun timeStringToMinutes(time: String): Int {
+        val (hours, minutes) = time.split(".").map { it.toInt() }
+        return hours * 60 + minutes
     }
 
     /**

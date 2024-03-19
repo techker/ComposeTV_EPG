@@ -44,7 +44,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
@@ -55,7 +54,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -66,6 +64,7 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -73,37 +72,27 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import coil.compose.AsyncImage
 import com.example.composeepg.R
 import com.example.composeepg.data.ChannelRowItems
-import com.example.composeepg.data.EpgData
 import com.example.composeepg.data.MockData
 import com.example.composeepg.data.ProgramRowItems
+import com.example.composeepg.screens.components.ChannelItemsContent
+import com.example.composeepg.screens.components.HoursItemsContent
+import com.example.composeepg.screens.components.ProgramItemsContent
+import com.example.composeepg.screens.components.dialogs.CardDialog
 import com.example.composeepg.view.HomeScreenUiState
 import com.example.composeepg.view.MainViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.Duration
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
-import java.util.Date
 
 @Composable
 fun EpgLayoutContentV2(mainViewModel: MainViewModel = viewModel()) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
 
-    /**
-     * Create Hours with Half Hour
-     */
-    val hoursList = mutableListOf<String>()
-    for (hour in 0 until 24) {
-        hoursList.add("$hour:00")
-        hoursList.add("$hour:30")
-    }
-
     when (val s = uiState) {
         is HomeScreenUiState.Ready -> {
-            CreateViewV4({ scrollable, scrollToFirst ->
-                Log.d("TAG", "onScroll : scrollable = $scrollable, scrollToFirst = $scrollToFirst")
-            }, s.channelList, mainViewModel)
+            CreateViewV4(s.channelList, mainViewModel)
         }
 
         is HomeScreenUiState.Loading -> IndeterminateCircularProgressBarDemo()
@@ -125,7 +114,6 @@ private fun Error(modifier: Modifier = Modifier) {
 
 @Composable
 fun CreateViewV4(
-    onVerticalScroll: (Boolean, Boolean) -> Unit,
     channelsList: MutableList<ChannelRowItems>,
     mainViewModel: MainViewModel,
 ) {
@@ -188,7 +176,6 @@ fun CreateViewV4(
      */
 
     LaunchedEffect(sharedLazyListState.isScrollInProgress) {
-        Log.d("TAG","LaunchedEffect 1 ${sharedLazyListState.isScrollInProgress}")
         if (sharedLazyListState.isScrollInProgress) {
             adjustScrollState.value = true
         }
@@ -210,7 +197,6 @@ fun CreateViewV4(
                         adjustScrollState.value = false // Prevent further adjustments until reset.
                     }
                 }
-                Log.d("TAG","LaunchedEffect 2 ${lastVisibleItemIndex} totalItemCount $totalItemCount")
             }
     }
     val shape = RoundedCornerShape(8.dp)
@@ -235,6 +221,13 @@ fun CreateViewV4(
 //        }
 //    }
 
+
+        LaunchedEffect(Unit) {
+            delay(300)
+            focusRequester.requestFocus()
+        }
+
+
     if (isOpen) {
         CardDialog(onDismiss = { isOpen = false })
     }
@@ -242,8 +235,28 @@ fun CreateViewV4(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
-            .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
+            .height(40.dp)
+            .background(Color.Transparent, shape = shape)
+
+    ) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+
+        ) {
+            Text(
+                text = currentTime.hour.toString().plus(":").plus(currentTime.minute.toString()),
+                modifier = Modifier.padding(20.dp, 10.dp, 20.dp, 0.dp),
+                color = Color.White,fontSize = 30.sp
+            )
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .padding(start = 10.dp, top = 45.dp,end = 50.dp)
             .background(Color.Transparent, shape = shape)
 
     ) {
@@ -379,7 +392,7 @@ fun CreateViewV4(
     Box(
         modifier = Modifier
             .wrapContentSize()
-            .padding(top = 150.dp)
+            .padding(top = 200.dp)
     ) {
         Row {
             LazyColumn(
@@ -394,7 +407,7 @@ fun CreateViewV4(
                 itemsIndexed(items = channelsList, key = { _, itemB -> itemB.channelID })
 
                 { index, itemC ->
-                    ChannelContent(item = itemC, index = index)
+                    ChannelItemsContent(item = itemC, index = index)
                 }
             }
 
@@ -416,8 +429,7 @@ fun CreateViewV4(
 
                     ) {
                         reducedHours.forEachIndexed { index, hour ->
-
-                            HourItem(hour = hour, index = index, mainViewModel, hoursIndex)
+                            HoursItemsContent(hour = hour, index = index, mainViewModel, hoursIndex)
                         }
                     }
                     LazyColumn(
@@ -430,16 +442,13 @@ fun CreateViewV4(
                                 listCompleted = true
                             }
                             val programs = MockData().getAllProgramsForChannel(item.channelID)
-                            Log.d("TAG","Program data size ${programs.size} ID ${item.channelID}")
                             Row(modifier = Modifier.fillMaxWidth()) {
-                                programs.forEachIndexed { _, program ->
-
+                                programs.forEachIndexed { i, program ->
                                     /**
                                      * Used in Mock 1.00 replace . with :
                                      */
                                     val convertedStartHours = program.programStart.replace(".", ":")
                                     val convertedEndHours = program.programEnd.replace(".", ":")
-
                                     /**
                                      * Check in HashMap for location
                                      */
@@ -453,7 +462,7 @@ fun CreateViewV4(
                                     val widthDp =
                                         with(LocalDensity.current) { durationInHours.toDp() }
 
-                                    ProgramItem(program, cellHeight, onFocusChange = { isFocused ->
+                                    ProgramItemsContent(program, cellHeight, onFocusChange = { isFocused ->
                                         if (isFocused) {
                                             focusedIndex = index + 1
                                             focusedIndexP = program.programID
@@ -461,7 +470,7 @@ fun CreateViewV4(
                                             hasFocusP = true
                                             focusedProgram = program.programID.toString()
                                         }
-                                    }, focusRequester, widthDp)
+                                    }, focusRequester, widthDp,i)
                                 }
                             }
                         }
@@ -492,309 +501,6 @@ fun IndeterminateCircularProgressBarDemo() {
     }
 }
 
-/**
- * Dialog for Fav
- */
-@Composable
-fun LargerDialog(onCardClicked: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Card(
-            modifier = Modifier
-                .size(400.dp, 100.dp)
-                .clickable(onClick = onCardClicked),
-
-            colors = CardDefaults.cardColors(
-                containerColor = Color.DarkGray, //Card background color
-                contentColor = Color.White  //Card content color,e.g.text
-            )
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painterResource(R.drawable.baseline_favorite_24),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .padding(start = 40.dp)
-                        .focusable(true)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Image(
-                    painterResource(R.drawable.baseline_favorite_24),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .padding(start = 40.dp)
-                        .focusable(true)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Image(
-                    painterResource(R.drawable.baseline_favorite_24),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .padding(start = 40.dp)
-                        .focusable(true)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                ClickableImage(
-                    resourceId = R.drawable.baseline_favorite_24,
-                    onClick = { /* Handle click event for this image */ }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ClickableImage(resourceId: Int, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painterResource(resourceId),
-            contentDescription = "",
-            modifier = Modifier
-                .fillMaxSize()
-                .focusable(true)
-        )
-    }
-}
-
-@Composable
-fun CardDialog(onDismiss: () -> Unit) {
-    Dialog(
-        onDismissRequest = onDismiss
-    ) {
-        Card(
-            modifier = Modifier
-                .width(60.dp)
-                .height(60.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.DarkGray,
-                contentColor = Color.White
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .clickable { onDismiss() },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ClickableImage(
-                    resourceId = R.drawable.baseline_favorite_24,
-                    onClick = { onDismiss() }
-                )
-            }
-        }
-    }
-}
-fun convertStringToTime(timeString: String): LocalTime {
-    // Replace the dot with a colon to get a standard time format
-    val standardTimeString = timeString.replace(".", ":")
-    // Parse the string into a LocalTime object
-    // Assuming the time string is in a format like "H:mm"
-    val formatter = DateTimeFormatter.ofPattern("H:mm")
-    return LocalTime.parse(standardTimeString, formatter)
-}
-
-fun timeStringToMinutes(time: String): Int {
-    val (hours, minutes) = time.split(".").map { it.toInt() }
-    return hours * 60 + minutes
-}
-
-@Composable
-fun HourItem(hour: String, index: Int, mainViewModel: MainViewModel, hoursIndex: Int) {
-    val density = LocalDensity.current
-    var now = false
-    var offsetFloat =0f
-    val currentTime = LocalTime.now()
-    val minuteOffset = currentTime.minute
-    val hourSlotWidthDp = 80.dp // Assuming each hour slot is 120.dp wide
-
-    // Use the density to convert DP to pixel values
-    val slotWidthPx = with(density) { hourSlotWidthDp.toPx() }
-    val strokeWidthPx = with(density) { 2.dp.toPx() }
-    // Calculate the fraction of the hour that has passed
-    // Calculate the x position of the line in pixels
-    val proportionOfHourPassed = minuteOffset / 60f
-    val linePosition = slotWidthPx * proportionOfHourPassed
-
-    val textHeightApprox = with(density) { 20.dp.toPx() }
-    val linePositionY =80 - textHeightApprox + with(density) { 4.dp.toPx() } // Adjust the 4.dp offset as needed
-
-    if (index == hoursIndex) { now = true }
-    if (index == 0) {
-        // Applying a negative offset to the first hour item
-        Text(
-            text =if(index == hoursIndex) "ON NOW" else hour,
-            modifier = Modifier
-                .offset(x = (-40).dp)
-                .onGloballyPositioned { layoutCoordinates ->
-                    val positionInRoot = layoutCoordinates.positionInRoot()
-                    if(now){mainViewModel.timeNowPosition =  positionInRoot.x -60}
-                    mainViewModel.startTimePositions[hour] = positionInRoot.x
-                }
-                .padding(horizontal = 50.dp, vertical = 4.dp),
-            color = Color.White
-        )
-    } else {
-        Text(
-            text = if(index == hoursIndex) "ON NOW" else hour,
-            modifier = Modifier
-                .padding(horizontal = 80.dp, vertical = 4.dp)
-                .onGloballyPositioned { layoutCoordinates ->
-                    val positionInRoot = layoutCoordinates.positionInRoot()
-                    if(now){
-                        mainViewModel.timeNowPosition =  positionInRoot.x -60
-                        mainViewModel.isPositionSet.postValue(true)
-                    }
-                    mainViewModel.startTimePositions[hour] = positionInRoot.x -60
-                    offsetFloat =positionInRoot.x - 80
-                },
-            // Testing to draw a line with time elapsed
-//                .drawBehind {
-//                    if (now) {
-//                        drawLine(
-//                        color = Color.Blue,
-//                        start = Offset(x = offsetFloat, y = linePositionY),
-//                        end = Offset(x = linePosition, y = linePositionY),
-//                        strokeWidth = strokeWidthPx,
-//                        )
-//                    }
-//                },
-            color = Color.White
-        )
-    }
-}
-
-@Composable
-fun ProgramItem(
-    program: ProgramRowItems,
-    cellHeight: Dp,
-    onFocusChange: (Boolean) -> Unit,
-    focusRequester: FocusRequester,
-    positionX: Dp
-) {
-    val borderWidth = 1.dp
-    Box(
-        modifier = Modifier
-            .height(cellHeight)
-            .width(positionX)
-            .drawWithContent {
-                drawContent()
-                drawLine(
-                    color = Color.Black,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = borderWidth.toPx(),
-                    cap = StrokeCap.Square
-                )
-            }
-            .onFocusChanged { focusState ->
-                onFocusChange(focusState.isFocused)
-            }
-            .clickable(onClick = { /* Handle click event */ })
-            .focusable(true)
-            .focusRequester(focusRequester),
-        contentAlignment = Alignment.Center
-    ) {
-        Divider(
-            color = Color.Black,
-            thickness = 1.dp,
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(1.dp)
-                .align(Alignment.TopStart)
-        )
-        Text(
-            text = program.programName,
-            color = Color.White
-        )
-        if (program.isLookBack) {
-            Column(
-                modifier = Modifier
-                    .padding(top = 30.dp)
-                    .align(Alignment.CenterStart)
-            ) {
-                Image(
-                    painterResource(R.drawable.reset),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .width(30.dp)
-                        .align(Alignment.Start)
-                        .padding(start = 20.dp)
-                )
-            }
-        }
-        Column(
-            modifier = Modifier
-                .padding(end = 0.dp, top = 30.dp)
-                .align(Alignment.CenterEnd)
-        ) {
-            if (program.isRecording) {
-                Image(
-                    painterResource(R.drawable.ic_record),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .width(30.dp)
-                        .align(Alignment.Start)
-                        .padding(end = 20.dp)
-                )
-            }
-        }
-    }
-
-}
-
-@Composable
-fun ChannelContent(item: ChannelRowItems, index: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 5.dp)
-            .clip(shape = RoundedCornerShape(15.dp, 0.dp, 0.dp, 15.dp))
-            .background(Color.LightGray)
-            .padding(4.dp)
-    ) {
-        if (item.channelLogo.isNotEmpty()) {
-            AsyncImage(
-                model = item.channelLogo,
-                contentDescription = "",
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape)
-                    .align(Alignment.CenterVertically)
-                    .padding(5.dp),
-                contentScale = ContentScale.Inside
-            )
-        } else {
-            Text(text = item.channelName)
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = (index + 1).toString(),
-            modifier = Modifier.padding(0.dp, 15.dp, 0.dp, 5.dp),
-            color = Color.Black
-        )
-        if (item.isLocked) {
-            Image(
-                painter = painterResource(R.drawable.baseline_lock_outline_24),
-                contentDescription = "",
-                modifier = Modifier
-                    .padding(start = 5.dp, top = 10.dp)
-                    .size(25.dp)
-            )
-        }
-    }
-}
 
 @Composable
 @Preview(device = Devices.TV_1080p)
