@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
-import com.example.composeepg.screens.EpgLayoutContent
+import com.example.composeepg.screens.EpgLayoutContentV2
 import com.example.composeepg.ui.theme.ComposeEpgTheme
 import com.kevinnzou.compose.progressindicator.BuildConfig
 import timber.log.Timber.*
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                         .wrapContentSize()
                         .background(MaterialTheme.colorScheme.surface)
                 ) {
-                    EpgLayoutContent()
+                    EpgLayoutContentV2()
                 }
             }
         }

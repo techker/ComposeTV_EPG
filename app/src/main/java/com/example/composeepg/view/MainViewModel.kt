@@ -1,5 +1,8 @@
 package com.example.composeepg.view
 
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,9 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 class MainViewModel: ViewModel() {
-
-val isLoading = MutableLiveData<Boolean>()
-
+    val isPositionSet = MutableLiveData<Boolean>()
     /**
      * Start by gathering info then sets ready
      */
@@ -29,6 +30,12 @@ val isLoading = MutableLiveData<Boolean>()
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = HomeScreenUiState.Loading
     )
+
+    /**
+     * HashMap for storing time position X
+     */
+    val startTimePositions = mutableStateMapOf<String, Float>()
+    var timeNowPosition:Float = 1F
 
 }
 sealed interface HomeScreenUiState {
