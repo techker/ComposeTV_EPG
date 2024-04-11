@@ -62,10 +62,8 @@ fun ProgramItemsContent(
             .onFocusChanged { focusState ->
                 onFocusChange(focusState.isFocused)
             }
-            .focusRequester(if (i == 0) focusRequester else FocusRequester()) // Apply the focusRequester only to the first item
-
+            .focusRequester(focusRequester)
             .clickable(onClick = {
-                Log.d("TAG","CLICKED PRG ")
                 showDialog = true
             })
             .focusable(true),
@@ -124,7 +122,6 @@ fun ProgramItemsContent(
         program,
         onDismiss = { showDialog = false },
         onConfirm = {
-            Log.d("TAG","Confirmed Recording")
             showDialog = false
         }
     )

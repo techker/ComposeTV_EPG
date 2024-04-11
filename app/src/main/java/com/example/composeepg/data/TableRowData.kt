@@ -10,6 +10,9 @@ data class ProgramRowItems(
     val isRecording: Boolean,
     val isLookBack: Boolean,
     val isLocked: Boolean,
+    val genre:String,
+    val quality:String,
+    val isAdult:Boolean
 )
 
 data class ChannelRowItems(
@@ -19,4 +22,8 @@ data class ChannelRowItems(
     val isFavorite: Boolean,
     val isLocked: Boolean,
     val isAdult: Boolean,
+    val quality:String,
+    val genre:String,
+    val isSubscribed:Boolean,
+    val channelNumber:Int
 )

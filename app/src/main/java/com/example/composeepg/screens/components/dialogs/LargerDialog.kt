@@ -81,7 +81,7 @@ fun LargerDialog(onCardClicked: () -> Unit) {
 fun ClickableImage(resourceId: Int, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(60.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

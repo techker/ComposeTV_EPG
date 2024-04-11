@@ -3,36 +3,27 @@ package com.example.composeepg.screens
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,26 +37,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -73,16 +55,16 @@ import coil.compose.AsyncImage
 import com.example.composeepg.R
 import com.example.composeepg.data.ChannelRowItems
 import com.example.composeepg.data.MockData
-import com.example.composeepg.data.ProgramRowItems
-import com.example.composeepg.screens.components.ChannelItemsContent
 import com.example.composeepg.screens.components.ChannelItemsContentV2
 import com.example.composeepg.screens.components.HoursItemsContent
 import com.example.composeepg.screens.components.ProgramItemsContent
-import com.example.composeepg.screens.components.dialogs.CardDialog
+import com.example.composeepg.screens.components.dialogs.FilterDialog
 import com.example.composeepg.view.HomeScreenUiState
 import com.example.composeepg.view.MainViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -95,7 +77,6 @@ fun EpgLayoutContentV1(mainViewModel: MainViewModel = viewModel()) {
         is HomeScreenUiState.Ready -> {
             CreateViewV1(s.channelList, mainViewModel)
         }
-
         is HomeScreenUiState.Loading -> IndeterminateCircularProgressBarDemo()
         is HomeScreenUiState.Error -> Error()
     }
@@ -118,7 +99,7 @@ fun CreateViewV1(
     channelsList: MutableList<ChannelRowItems>,
     mainViewModel: MainViewModel,
 ) {
-
+    var channelList by remember { mutableStateOf(channelsList) }
     val horizontalScrollState = rememberScrollState()
     val focusRequester = remember { FocusRequester() }
     val firstColumnWidth = 120.dp
@@ -133,6 +114,7 @@ fun CreateViewV1(
     val density = LocalDensity.current
     val context = LocalContext.current
     val sharedLazyListState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
     val gradientColors = listOf(
         Color.DarkGray,
@@ -159,16 +141,19 @@ fun CreateViewV1(
     ) // Round time to nearest half hour
 
     val formatter = DateTimeFormatter.ofPattern("H:mm") // Format as "hour:minute"
+    val formatterNow = DateTimeFormatter.ofPattern("H") // Format as "hour"
     val currentTimeString = roundedTime.format(formatter) // Format rounded time as string
+    val currentTimeNowString = roundedTime.format(formatterNow) // Format rounded time as string
 
     val indexReduced = reducedHours.indexOf(currentTimeString)
 
     var hoursIndex = 0
     if (indexReduced != -1) {
-        println("Current time is at index: $indexReduced time ${reducedHours[indexReduced]}")
         hoursIndex = indexReduced
     }
+    val program = MockData().getProgramOnNow(currentTimeNowString)
     val adjustScrollState = remember { mutableStateOf(true) }
+    val onNowProgram = (program?.programID)?.plus(1) //Calculate that items start at 0 add plus 1 to get the correct ID
     /**
      * Channels rows
      * This logic initiates a scroll adjustment when the snapshot flow detects that the last visible item index is within a certain range of the total item count,
@@ -208,29 +193,83 @@ fun CreateViewV1(
      */
     var isOpen by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        delay(300)
+        focusRequester.requestFocus()
+    }
+
     /**
-     * Scroll to location of time Now
+     * Opens Filter Dialog
+     * Receives Item selected
+     * Handle Selection -> Filter programs and channels
      */
-    val scrollTo = mainViewModel.timeNowPosition
-    val timeWasSetPosition by remember { mutableStateOf(mainViewModel.isPositionSet) }
-//    if(timeWasSetPosition.value == true){
-//        Log.d("TAG","Scroll to $scrollTo")
-//        LaunchedEffect(true) {
-//            coroutineScope.launch {
-//               // horizontalScrollState.scrollTo(scrollTo.toInt())
-//            }
-//        }
-//    }
-
-
-        LaunchedEffect(Unit) {
-            delay(300)
-            focusRequester.requestFocus()
-        }
-
-
     if (isOpen) {
-        CardDialog(onDismiss = { isOpen = false })
+        FilterDialog(onCardClicked = { received ->
+            when(received){
+                "Favorites"->{
+                    scope.launch {
+                        val filtered = withContext(Dispatchers.Default) {
+                            channelList.filter { it.isFavorite }.toMutableList()
+                        }
+                        withContext(Dispatchers.Main) {
+                            channelList = filtered
+                            delay(300)
+                            focusRequester.requestFocus()
+
+                        }
+                    }
+                }
+                "HD"->{
+                    scope.launch {
+                        val filtered = withContext(Dispatchers.Default) {
+                            channelList.filter { it.quality == "HD"}.toMutableList()
+                        }
+                        withContext(Dispatchers.Main) {
+                            channelList = filtered
+                            delay(300)
+                            focusRequester.requestFocus()
+                        }
+                    }
+                }
+                "4K"->{
+                    scope.launch {
+                        val filtered = withContext(Dispatchers.Default) {
+                            channelList.filter { it.quality == "4K"}.toMutableList()
+                        }
+                        withContext(Dispatchers.Main) {
+                            channelList = filtered
+                            delay(300)
+                            focusRequester.requestFocus()
+                        }
+                    }
+                }
+                "Music"->{
+                    scope.launch {
+                        val filtered = withContext(Dispatchers.Default) {
+                            channelList.filter { it.genre == "Music"}.toMutableList()
+                        }
+                        withContext(Dispatchers.Main) {
+                            channelList = filtered
+                            delay(300)
+                            focusRequester.requestFocus()
+                        }
+                    }
+                }
+                "Reset"-> {
+                    scope.launch {
+                        val originalList = MockData().createChannels()
+                        withContext(Dispatchers.Main) {
+                            channelList = originalList
+                            delay(300)
+                            focusRequester.requestFocus()
+                        }
+                    }
+                }
+            }
+            isOpen = false
+        }, onDismiss = {
+            isOpen = false
+        })
     }
 
     Box(
@@ -238,7 +277,6 @@ fun CreateViewV1(
             .fillMaxWidth()
             .height(40.dp)
             .background(Color.Transparent, shape = shape)
-
     ) {
         Column(
             modifier = Modifier
@@ -248,7 +286,7 @@ fun CreateViewV1(
             Text(
                 text = currentTime.hour.toString().plus(":").plus(currentTime.minute.toString()),
                 modifier = Modifier.padding(20.dp, 10.dp, 20.dp, 0.dp),
-                color = Color.White,fontSize = 30.sp
+                color = Color.White, fontSize = 30.sp
             )
         }
     }
@@ -257,9 +295,8 @@ fun CreateViewV1(
         modifier = Modifier
             .fillMaxWidth()
             .height(200.dp)
-            .padding(start = 10.dp, top = 45.dp,end = 50.dp)
+            .padding(start = 10.dp, top = 45.dp, end = 50.dp)
             .background(Color.Transparent, shape = shape)
-
     ) {
         Column {
             if (focusedProgram != "-1") {
@@ -352,9 +389,7 @@ fun CreateViewV1(
                     .width(2.dp)
                     .background(Color.White)
                     .align(Alignment.CenterHorizontally),
-
                 )
-
         }
         Column(
             modifier = Modifier
@@ -383,7 +418,6 @@ fun CreateViewV1(
                         .width(48.dp)
                         .height(48.dp)
                 )
-
             }
         }
     }
@@ -394,7 +428,18 @@ fun CreateViewV1(
         modifier = Modifier
             .wrapContentSize()
             .padding(top = 200.dp)
+
     ) {
+        TextButton(
+            {
+                isOpen = true
+            },
+            modifier = Modifier.padding(start = 15.dp), contentPadding = PaddingValues(0.dp),
+        )
+        {
+            Text("Filter", color = Color.White, modifier = Modifier.padding(bottom = 20.dp))
+        }
+
         Row {
             LazyColumn(
                 modifier = Modifier
@@ -405,8 +450,7 @@ fun CreateViewV1(
                 /**
                  * Channels
                  */
-                itemsIndexed(items = channelsList, key = { _, itemB -> itemB.channelID })
-
+                itemsIndexed(items = channelList, key = { _, itemB -> itemB.channelID })
                 { index, itemC ->
                     ChannelItemsContentV2(item = itemC, index = index)
                 }
@@ -419,6 +463,7 @@ fun CreateViewV1(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(state = horizontalScrollState)
+
             ) {
                 Column(modifier = Modifier.fillMaxWidth())
                 {
@@ -434,22 +479,30 @@ fun CreateViewV1(
                         }
                     }
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth().background(Color.DarkGray),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Transparent),
                         contentPadding = PaddingValues(start = 10.dp, bottom = 8.dp),
                         state = sharedLazyListState
                     ) {
-                        itemsIndexed(items = channelsList) { index, item ->
-                            if (index == channelsList.size) {
+                        itemsIndexed(items = channelList) { index, item ->
+                            if (index == channelList.size) {
                                 listCompleted = true
                             }
                             val programs = MockData().getAllProgramsForChannel(item.channelID)
+                            var indexOfPrg=0
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 programs.forEachIndexed { i, program ->
+
+                                    if(program.programID == onNowProgram){
+                                        indexOfPrg = i+1
+                                    }
                                     /**
                                      * Used in Mock 1.00 replace . with :
                                      */
                                     val convertedStartHours = program.programStart.replace(".", ":")
                                     val convertedEndHours = program.programEnd.replace(".", ":")
+
                                     /**
                                      * Check in HashMap for location
                                      */
@@ -462,16 +515,22 @@ fun CreateViewV1(
                                     val durationInHours = positionXEnd - positionX
                                     val widthDp =
                                         with(LocalDensity.current) { durationInHours.toDp() }
-
-                                    ProgramItemsContent(program, cellHeight, onFocusChange = { isFocused ->
-                                        if (isFocused) {
-                                            focusedIndex = index + 1
-                                            focusedIndexP = program.programID
-                                            focusedIndexCh = program.channelId
-                                            hasFocusP = true
-                                            focusedProgram = program.programID.toString()
-                                        }
-                                    }, focusRequester, widthDp,i)
+                                    ProgramItemsContent(
+                                        program,
+                                        cellHeight,
+                                        onFocusChange = { isFocused ->
+                                            if (isFocused) {
+                                                focusedIndex = index + 1
+                                                focusedIndexP = program.programID
+                                                focusedIndexCh = program.channelId
+                                                hasFocusP = true
+                                                focusedProgram = program.programID.toString()
+                                            }
+                                        },
+                                       focusRequester = if (index == indexOfPrg) focusRequester else FocusRequester(), // Adjusted based on your setup
+                                        widthDp,
+                                        i
+                                    )
                                 }
                             }
                         }
@@ -481,7 +540,6 @@ fun CreateViewV1(
         }
     }
 }
-
 
 @Composable
 @Preview(device = Devices.TV_1080p)

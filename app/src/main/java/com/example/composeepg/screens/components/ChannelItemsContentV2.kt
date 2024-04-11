@@ -64,7 +64,7 @@ fun ChannelItemsContentV2(item: ChannelRowItems, index: Int) {
         }
         Spacer(modifier = Modifier.width(10.dp))
         Text(
-            text = (index + 1).toString(),
+            text = item.channelNumber.toString(),
             modifier = Modifier.padding(0.dp, 15.dp, 0.dp, 5.dp),
             color = Color.White
         )
