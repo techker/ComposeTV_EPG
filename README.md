@@ -16,13 +16,11 @@ Feel free to use it or improve.
   
 # V1 DarkGray
 
-![screenshot](first_look_v1.png)
+![screenshot](v1_filter_ui_changes.png)
 
 # V1 Background Color
 
 ![screenshot](first_look.png)
-
-![screenshot](v1_filter_ui_changes.png)
 
 # V3 Bottom Details mini view
 
