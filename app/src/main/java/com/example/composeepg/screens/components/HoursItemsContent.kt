@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -53,6 +55,16 @@ fun HoursItemsContent (hour: String, index: Int, mainViewModel: MainViewModel, h
             text = if(index == hoursIndex) "ON NOW" else hour,
             modifier = Modifier
                 .padding(horizontal = 80.dp, vertical = 4.dp)
+//                .drawBehind {
+//                    if (now) {
+//                        drawLine(
+//                            color = Color.Blue,
+//                            start = Offset(x = offsetFloat, y = linePositionY),
+//                            end = Offset(x = linePosition, y = linePositionY),
+//                            strokeWidth = strokeWidthPx,
+//                        )
+//                    }
+//                }
                 .onGloballyPositioned { layoutCoordinates ->
                     val positionInRoot = layoutCoordinates.positionInRoot()
                     if(now){
@@ -62,17 +74,6 @@ fun HoursItemsContent (hour: String, index: Int, mainViewModel: MainViewModel, h
                     mainViewModel.startTimePositions[hour] = positionInRoot.x -60
                     offsetFloat =positionInRoot.x - 80
                 },
-            // Testing to draw a line with time elapsed
-//                .drawBehind {
-//                    if (now) {
-//                        drawLine(
-//                        color = Color.Blue,
-//                        start = Offset(x = offsetFloat, y = linePositionY),
-//                        end = Offset(x = linePosition, y = linePositionY),
-//                        strokeWidth = strokeWidthPx,
-//                        )
-//                    }
-//                },
             color = Color.White
         )
     }

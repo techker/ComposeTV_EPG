@@ -1,8 +1,10 @@
 package com.example.composeepg.screens
 
 import android.util.Log
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
@@ -39,14 +42,19 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -120,7 +128,7 @@ fun CreateViewV1(
     val context = LocalContext.current
     val sharedLazyListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-
+    var userHasInteracted by remember { mutableStateOf(false) }
     val gradientColors = listOf(
         Color.DarkGray,
         Color.Blue,
@@ -426,7 +434,6 @@ fun CreateViewV1(
             onCheckedChange = {
                 isOpen = true
             }, modifier = Modifier.onFocusChanged {
-                Log.d("EPG","Filter Forus changed $it or ${it.isFocused}")
                 if(it.hasFocus){
                     filterWasActive = true
                 }
@@ -461,7 +468,7 @@ fun CreateViewV1(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(state = horizontalScrollState)
+                   .horizontalScroll(state = horizontalScrollState)
 
             ) {
                 Column(modifier = Modifier.fillMaxWidth().background(backgroundColor))
@@ -476,10 +483,15 @@ fun CreateViewV1(
                         reducedHours.forEachIndexed { index, hour ->
                             HoursItemsContent(hour = hour, index = index, mainViewModel, hoursIndex)
                         }
+
                     }
                     LazyColumn(
                         modifier = Modifier
-                            .fillMaxWidth().background(backgroundColor),
+                            .fillMaxWidth().background(backgroundColor)
+                            .onGloballyPositioned { }
+                            .pointerInput(Unit) {
+                                detectTapGestures(onPress = { userHasInteracted = true })
+                            },
                         contentPadding = PaddingValues(start = 10.dp, bottom = 20.dp, top = 5.dp),
                         state = sharedLazyListState
                     ) {
@@ -524,17 +536,15 @@ fun CreateViewV1(
                                                 hasFocusP = true
                                                 focusedProgram = program.programID.toString()
                                                 lastFocusedItemId.value = program.programID
-                                                Log.d("EPG","Program Item Focused is $index or ${program.programID}")
                                             }
                                         },
-                                       focusRequester = if (index == indexOfPrg) focusRequester else FocusRequester(), // Adjusted based on your setup
+                                       focusRequester = if (index == indexOfPrg) focusRequester else FocusRequester(),
                                         widthDp,
                                         i
                                     )
                                     LaunchedEffect(key1 = program.programID, key2 = lastFocusedItemId.value) {
-                                        if (program.programID == lastFocusedItemId.value) {
+                                        if (programs[index].programID == lastFocusedItemId.value && !userHasInteracted) {
                                             focusRequester.requestFocus()
-
                                         }
                                     }
                                 }
@@ -547,7 +557,18 @@ fun CreateViewV1(
         }
     }
 }
-
+@Composable
+fun VerticalTimeLine(xPosition: Dp) {
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(2.dp) // Adjust the line's thickness
+            .background(Color.Blue) // Adjust the line's color
+            .offset(x = xPosition)
+    ) {
+        // No content needed inside the box, it's just the line
+    }
+}
 @Composable
 @Preview(device = Devices.TV_1080p)
 fun EpgLayoutContentPreviewV1() {
