@@ -27,6 +27,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.composeepg.R
@@ -124,5 +126,15 @@ fun ProgramItemsContent(
         onConfirm = {
             showDialog = false
         }
+    )
+}
+@Composable
+@Preview(device = Devices.TV_1080p)
+fun ProgramItemsContentPreviewV1() {
+    ProgramItemsContent(
+        ProgramRowItems(programID = 1, programName = "Program 1A", "https://raw.githubusercontent.com/Jasmeet181/mediaportal-us-logos/master/TV/.Light/AMC%20HD.png",programStart = "1.00", programEnd = "2.00", channelId = 1,true,true,false,"Sports","4K",false),50.dp,{
+
+        }, focusRequester = FocusRequester(),200.dp,1
+
     )
 }

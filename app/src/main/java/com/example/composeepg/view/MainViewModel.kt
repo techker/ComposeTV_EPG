@@ -1,5 +1,7 @@
 package com.example.composeepg.view
 
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -8,9 +10,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.composeepg.R
 import com.example.composeepg.data.ChannelRowItems
 import com.example.composeepg.data.MockData
 import com.example.composeepg.data.ProgramRowItems
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -18,6 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class MainViewModel: ViewModel() {
     val isPositionSet = MutableLiveData<Boolean>()
+    private val selectedFilterList = MutableStateFlow(FilterList())
     /**
      * Start by gathering info then sets ready
      */
@@ -39,6 +44,28 @@ class MainViewModel: ViewModel() {
     val startTimePositions = mutableStateMapOf<String, Float>()
     var timeNowPosition:Float = 1F
 
+    fun updateSelectedFilterList(filterList: FilterList) {
+        selectedFilterList.value = filterList
+    }
+
+}
+@Immutable
+data class FilterList(val items: List<FilterCondition> = emptyList()) {
+    fun toIdList(): List<Int> {
+        if (items.isEmpty()) {
+            return FilterCondition.None.idList
+        }
+        return items.asSequence().map {
+            it.idList
+        }.fold(emptyList()) { acc, ints ->
+            acc + ints
+        }
+    }
+}
+
+@Immutable
+enum class FilterCondition(val idList: List<Int>, @StringRes val labelId: Int) {
+    None((0..28).toList(), R.string.favorites_unknown),
 }
 sealed interface HomeScreenUiState {
     data object Loading : HomeScreenUiState

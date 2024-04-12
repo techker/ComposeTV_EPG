@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.androidx.tv.foundation)
     implementation(libs.androidx.tv.material)
     implementation(libs.androidx.material3.compose)
+    implementation(libs.androidx.material.android)
 
     //Lifecycle
     implementation(libs.androidx.viewmodel)

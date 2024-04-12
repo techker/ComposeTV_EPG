@@ -19,6 +19,19 @@ class MockData {
         )
     }
 
+    fun createCategories():MutableList<CategoriesItems>{
+        return mutableListOf(
+            CategoriesItems(1,"USA"),
+            CategoriesItems(2,"Canada"),
+            CategoriesItems(3,"France"),
+            CategoriesItems(4,"UK"),
+            CategoriesItems(5,"Italy"),
+            CategoriesItems(6,"Spain"),
+            CategoriesItems(7,"Portugal"),
+            CategoriesItems(8,"Poland"),
+        )
+    }
+
     fun createChannelsFlow()= flow {
          emit(createChannels())
     }

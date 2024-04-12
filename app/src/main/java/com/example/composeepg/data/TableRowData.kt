@@ -27,3 +27,8 @@ data class ChannelRowItems(
     val isSubscribed:Boolean,
     val channelNumber:Int
 )
+
+data class CategoriesItems(
+    val categoryId:Int,
+    val categoryName:String,
+)

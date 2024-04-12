@@ -51,7 +51,7 @@ fun FilterDialog(onCardClicked: (String) -> Unit,onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.width(8.dp))
                 ClickableImage(
                     resourceId = R.drawable.baseline_reset_filter_24,
-                    onClick = { onCardClicked("reset") }
+                    onClick = { onCardClicked("Reset") }
                 )
             }
         }

@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -56,6 +57,7 @@ import com.example.composeepg.R
 import com.example.composeepg.data.ChannelRowItems
 import com.example.composeepg.data.MockData
 import com.example.composeepg.screens.components.ChannelItemsContentV2
+import com.example.composeepg.screens.components.EpgFilterChip
 import com.example.composeepg.screens.components.HoursItemsContent
 import com.example.composeepg.screens.components.ProgramItemsContent
 import com.example.composeepg.screens.components.dialogs.FilterDialog
@@ -75,7 +77,9 @@ fun EpgLayoutContentV1(mainViewModel: MainViewModel = viewModel()) {
 
     when (val s = uiState) {
         is HomeScreenUiState.Ready -> {
-            CreateViewV1(s.channelList, mainViewModel)
+            MaterialTheme {
+                CreateViewV1(s.channelList, mainViewModel,backgroundColor = MaterialTheme.colorScheme.onSurface)
+            }
         }
         is HomeScreenUiState.Loading -> IndeterminateCircularProgressBarDemo()
         is HomeScreenUiState.Error -> Error()
@@ -98,6 +102,7 @@ private fun Error(modifier: Modifier = Modifier) {
 fun CreateViewV1(
     channelsList: MutableList<ChannelRowItems>,
     mainViewModel: MainViewModel,
+    backgroundColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     var channelList by remember { mutableStateOf(channelsList) }
     val horizontalScrollState = rememberScrollState()
@@ -144,6 +149,7 @@ fun CreateViewV1(
     val formatterNow = DateTimeFormatter.ofPattern("H") // Format as "hour"
     val currentTimeString = roundedTime.format(formatter) // Format rounded time as string
     val currentTimeNowString = roundedTime.format(formatterNow) // Format rounded time as string
+    val clock = currentTime.format(formatter)
 
     val indexReduced = reducedHours.indexOf(currentTimeString)
 
@@ -187,12 +193,12 @@ fun CreateViewV1(
     }
     val shape = RoundedCornerShape(8.dp)
     val bgwColor = MaterialTheme.colorScheme.background
-
+    val lastFocusedItemId = remember { mutableStateOf<Int?>(null) }
     /**
      * Opens Favorite Dialog
      */
     var isOpen by remember { mutableStateOf(false) }
-
+    var filterWasActive by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(300)
         focusRequester.requestFocus()
@@ -259,6 +265,7 @@ fun CreateViewV1(
                     scope.launch {
                         val originalList = MockData().createChannels()
                         withContext(Dispatchers.Main) {
+                            channelList.clear()
                             channelList = originalList
                             delay(300)
                             focusRequester.requestFocus()
@@ -276,7 +283,7 @@ fun CreateViewV1(
         modifier = Modifier
             .fillMaxWidth()
             .height(40.dp)
-            .background(Color.Transparent, shape = shape)
+            .background(backgroundColor, shape = shape)
     ) {
         Column(
             modifier = Modifier
@@ -284,8 +291,8 @@ fun CreateViewV1(
 
         ) {
             Text(
-                text = currentTime.hour.toString().plus(":").plus(currentTime.minute.toString()),
-                modifier = Modifier.padding(20.dp, 10.dp, 20.dp, 0.dp),
+                text = clock,
+                modifier = Modifier.padding(0.dp, 10.dp, 30.dp, 0.dp),
                 color = Color.White, fontSize = 30.sp
             )
         }
@@ -296,7 +303,7 @@ fun CreateViewV1(
             .fillMaxWidth()
             .height(200.dp)
             .padding(start = 10.dp, top = 45.dp, end = 50.dp)
-            .background(Color.Transparent, shape = shape)
+            .background(backgroundColor, shape = shape)
     ) {
         Column {
             if (focusedProgram != "-1") {
@@ -354,6 +361,7 @@ fun CreateViewV1(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(start = 230.dp)
+
         ) {
             if (focusedProgram != "-1") {
                 val programSelected = MockData().getProgramData(focusedIndexP, focusedIndexCh)
@@ -378,23 +386,6 @@ fun CreateViewV1(
         Column(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .width(400.dp)
-                .padding(end = 200.dp)
-        ) {
-            Divider(
-                color = Color.Black,
-                thickness = 1.dp,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(2.dp)
-                    .background(Color.White)
-                    .align(Alignment.CenterHorizontally),
-                )
-        }
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-
         ) {
             if (focusedProgram != "-1") {
                 val channelData = MockData().getChannelData(focusedIndexCh)
@@ -428,23 +419,31 @@ fun CreateViewV1(
         modifier = Modifier
             .wrapContentSize()
             .padding(top = 200.dp)
-
     ) {
-        TextButton(
-            {
+        EpgFilterChip(
+            label = "Filter",
+            isChecked = false,
+            onCheckedChange = {
                 isOpen = true
-            },
-            modifier = Modifier.padding(start = 15.dp), contentPadding = PaddingValues(0.dp),
-        )
-        {
-            Text("Filter", color = Color.White, modifier = Modifier.padding(bottom = 20.dp))
-        }
-
+            }, modifier = Modifier.onFocusChanged {
+                Log.d("EPG","Filter Forus changed $it or ${it.isFocused}")
+                if(it.hasFocus){
+                    filterWasActive = true
+                }
+                if(!it.hasFocus && filterWasActive) {
+                    scope.launch {
+                        withContext(Dispatchers.Main) {
+                            focusRequester.requestFocus()
+                        }
+                    }
+                }
+            })
         Row {
             LazyColumn(
                 modifier = Modifier
                     .width(firstColumnWidth)
-                    .padding(start = 10.dp, top = 30.dp),
+                    .padding(start = 10.dp, top = 40.dp)
+                    .background(backgroundColor),
                 state = sharedLazyListState,
             ) {
                 /**
@@ -465,12 +464,12 @@ fun CreateViewV1(
                     .horizontalScroll(state = horizontalScrollState)
 
             ) {
-                Column(modifier = Modifier.fillMaxWidth())
+                Column(modifier = Modifier.fillMaxWidth().background(backgroundColor))
                 {
                     // Hours Row
                     Row(
                         modifier = Modifier
-                            .padding(bottom = 5.dp)
+                            .padding(bottom = 10.dp)
                             .fillMaxWidth()
 
                     ) {
@@ -480,9 +479,8 @@ fun CreateViewV1(
                     }
                     LazyColumn(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.Transparent),
-                        contentPadding = PaddingValues(start = 10.dp, bottom = 8.dp),
+                            .fillMaxWidth().background(backgroundColor),
+                        contentPadding = PaddingValues(start = 10.dp, bottom = 20.dp, top = 5.dp),
                         state = sharedLazyListState
                     ) {
                         itemsIndexed(items = channelList) { index, item ->
@@ -491,7 +489,7 @@ fun CreateViewV1(
                             }
                             val programs = MockData().getAllProgramsForChannel(item.channelID)
                             var indexOfPrg=0
-                            Row(modifier = Modifier.fillMaxWidth()) {
+                            Row(modifier = Modifier.fillMaxWidth().background(backgroundColor)) {
                                 programs.forEachIndexed { i, program ->
 
                                     if(program.programID == onNowProgram){
@@ -525,14 +523,23 @@ fun CreateViewV1(
                                                 focusedIndexCh = program.channelId
                                                 hasFocusP = true
                                                 focusedProgram = program.programID.toString()
+                                                lastFocusedItemId.value = program.programID
+                                                Log.d("EPG","Program Item Focused is $index or ${program.programID}")
                                             }
                                         },
                                        focusRequester = if (index == indexOfPrg) focusRequester else FocusRequester(), // Adjusted based on your setup
                                         widthDp,
                                         i
                                     )
+                                    LaunchedEffect(key1 = program.programID, key2 = lastFocusedItemId.value) {
+                                        if (program.programID == lastFocusedItemId.value) {
+                                            focusRequester.requestFocus()
+
+                                        }
+                                    }
                                 }
                             }
+
                         }
                     }
                 }

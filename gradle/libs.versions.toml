@@ -17,7 +17,7 @@ progressindicator ="1.0.0"
 timber="5.0.1"
 joda-time="2.12.0"
 compose-runtime ="1.6.5"
-
+material="1.4.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -37,7 +37,7 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil-compose
 androidx-tv-foundation = { module = "androidx.tv:tv-foundation", version.ref = "compose-for-tv" }
 androidx-tv-material = { module = "androidx.tv:tv-material", version.ref = "compose-for-tv" }
 androidx-material3-compose ={module = "androidx.compose.material3:material3", version.ref = "compose-material3"}
-
+androidx-material-android ={module = "com.google.android.material:material", version.ref = "material"}
 
 androidx-viewmodel = { module ="androidx.lifecycle:lifecycle-viewmodel-compose",version.ref ="viewmodel"}
 androidx-lifecycle-runtime-ktx= { module ="androidx.lifecycle:lifecycle-runtime-ktx",version.ref ="lifecycleRuntimeKtx"}

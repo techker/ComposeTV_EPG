@@ -22,7 +22,10 @@ Feel free to use it or improve.
 
 ![screenshot](first_look.png)
 
+![screenshot](v1_filter_ui_changes.png)
+
 # V3 Bottom Details mini view
 
 ![screenshot](first_look_v2_style.png)
 
+#Logos found https://github.com/Jasmeet181/mediaportal-us-logos
