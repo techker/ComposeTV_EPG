@@ -17,6 +17,7 @@ Feel free to use it or improve.
 # V1 DarkGray
 
 ![screenshot](v1_filter_ui_changes.png)
+![screenshot](v1_filter_dialog.png)
 
 # V1 Background Color
 
