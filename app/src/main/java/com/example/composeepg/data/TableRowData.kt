@@ -4,6 +4,7 @@ data class ProgramRowItems(
     val programID: Int,
     val programName: String,
     val programImage: String,
+    val programDescription:String,
     val programStart: String,
     val programEnd: String,
     val channelId: Int,

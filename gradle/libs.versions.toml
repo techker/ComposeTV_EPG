@@ -16,8 +16,9 @@ lifecycleRuntimeCompose = "2.7.0"
 progressindicator ="1.0.0"
 timber="5.0.1"
 joda-time="2.12.0"
-compose-runtime ="1.6.5"
+compose-runtime ="1.6.6"
 material="1.4.0"
+swipe_refresh ="0.21.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -29,16 +30,18 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil-compose" }
 androidx-tv-foundation = { module = "androidx.tv:tv-foundation", version.ref = "compose-for-tv" }
+
+
+
 androidx-tv-material = { module = "androidx.tv:tv-material", version.ref = "compose-for-tv" }
 androidx-material3-compose ={module = "androidx.compose.material3:material3", version.ref = "compose-material3"}
 androidx-material-android ={module = "com.google.android.material:material", version.ref = "material"}
-
+androidx-compose-material={module = "androidx.compose.material:material", version.ref = "compose-material3"}
 androidx-viewmodel = { module ="androidx.lifecycle:lifecycle-viewmodel-compose",version.ref ="viewmodel"}
 androidx-lifecycle-runtime-ktx= { module ="androidx.lifecycle:lifecycle-runtime-ktx",version.ref ="lifecycleRuntimeKtx"}
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
@@ -46,7 +49,9 @@ androidx-viewmodel-livedata = { module ="androidx.lifecycle:lifecycle-livedata-k
 androidx-viewmodel-savedstate = { module ="androidx.lifecycle:lifecycle-viewmodel-savedstate",version.ref ="viewmodel"}
 androidx-compose-runtime = { module ="androidx.compose.runtime:runtime",version.ref ="compose-runtime"}
 androidx-compose-runtime-livedata = { module ="androidx.compose.runtime:runtime-livedata",version.ref ="compose-runtime"}
-
+androidx-compose-foundation= { module ="androidx.compose.foundation:foundation",version.ref ="compose-runtime"}
+androidx-compose-foundation-lazy ={ module ="androidx.compose.foundation:foundation-lazy",version.ref = "compose-runtime"}
+androidx-compose-tooling={module = "androidx.compose.ui:ui-tooling", version.ref = "compose-runtime"}
 
 
 androidx-lifecycle-runtime-compose-group = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }

@@ -2,11 +2,8 @@ package com.example.composeepg.view
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +20,47 @@ import kotlinx.coroutines.flow.stateIn
 class MainViewModel: ViewModel() {
     val isPositionSet = MutableLiveData<Boolean>()
     private val selectedFilterList = MutableStateFlow(FilterList())
+    private var programsList:MutableList<ProgramRowItems> = mutableListOf()
+    private var channelList:MutableList<ChannelRowItems> = mutableListOf()
+    private var hoursList = mutableListOf<String>()
+    var offsetHours: Dp? = null
+
+    init {
+        loadProgramData()
+    }
+
+    fun setHoursFullList(reducedHours: MutableList<String>) {
+        hoursList =reducedHours
+    }
+    fun getHoursFullList() :MutableList<String>{
+        return hoursList
+    }
+
+    private fun loadProgramData() {
+        programsList = MockData().createPrograms()
+        channelList = MockData().createChannels()
+    }
+
+    fun getProgramsList(): List<ProgramRowItems>{
+        return programsList
+    }
+
+    fun getProgramOnNow(indexReduced: String): ProgramRowItems? {
+        return programsList.filter {
+            it.programStart.substringBefore(".") == indexReduced
+        }.firstOrNull()
+    }
+
+    fun getProgramsForChannel(channelId: Int): List<ProgramRowItems> {
+        return programsList.filter { it.channelId == channelId }.toMutableList()
+    }
+    fun getProgramData(programId:Int,channelId: Int):ProgramRowItems {
+        return programsList.filter { it.programID == programId && it.channelId == channelId }.first()
+    }
+    fun getChannelData(channelId:Int):ChannelRowItems {
+        return channelList.filter { it.channelID == channelId }.first()
+    }
+
     /**
      * Start by gathering info then sets ready
      */

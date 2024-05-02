@@ -41,7 +41,6 @@ fun Modifier.handleDPadKeyEvents(
     fun onActionUp(block: () -> Unit) {
         if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP) block()
     }
-
     if (DPadEventsKeyCodes.contains(it.nativeKeyEvent.keyCode)) {
         when (it.nativeKeyEvent.keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT -> {
@@ -62,11 +61,67 @@ fun Modifier.handleDPadKeyEvents(
                     return@onPreviewKeyEvent true
                 }
             }
+            KeyEvent.KEYCODE_F10-> {
+                onEnter?.apply {
+                    onActionUp(::invoke)
+                    return@onPreviewKeyEvent true
+                }
+            }
         }
     }
     false
 }
-
+fun Modifier.handleDPadKeyEventsCustom(
+    onGuide: (() -> Unit)? = null,
+    onRed: (() -> Unit)? = null,
+    onGreen: (() -> Unit)? = null,
+    onYellow: (() -> Unit)? = null,
+    onBlue: (() -> Unit)? = null,
+    onEnter: (() -> Unit)? = null
+) = onPreviewKeyEvent {
+    fun onActionUp(block: () -> Unit) {
+        if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP) block()
+    }
+    when (it.nativeKeyEvent.keyCode) {
+        /**
+         * Need to define according to remote used
+         * F10 for me is Guide
+         */
+        //Guide
+        KeyEvent.KEYCODE_F10 -> {
+            onGuide?.invoke().also { return@onPreviewKeyEvent true }
+        }
+        //RED
+        KeyEvent.KEYCODE_F6-> {
+            onRed?.apply {
+                onActionUp(::invoke)
+                return@onPreviewKeyEvent true
+            }
+        }
+        //Green
+        KeyEvent.KEYCODE_F8-> {
+            onGreen?.apply {
+                onActionUp(::invoke)
+                return@onPreviewKeyEvent true
+            }
+        }
+        //Yellow
+        KeyEvent.KEYCODE_F7-> {
+            onYellow?.apply {
+                onActionUp(::invoke)
+                return@onPreviewKeyEvent true
+            }
+        }
+        //Blue
+        KeyEvent.KEYCODE_F9-> {
+            onBlue?.apply {
+                onActionUp(::invoke)
+                return@onPreviewKeyEvent true
+            }
+        }
+    }
+    false
+}
 /**
  * Handles all D-Pad Keys
  * */
@@ -77,7 +132,6 @@ fun Modifier.handleDPadKeyEvents(
     onDown: (() -> Unit)? = null,
     onEnter: (() -> Unit)? = null
 ) = onKeyEvent {
-
     if (DPadEventsKeyCodes.contains(it.nativeKeyEvent.keyCode) && it.nativeKeyEvent.action == KeyEvent.ACTION_UP) {
         when (it.nativeKeyEvent.keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT -> {

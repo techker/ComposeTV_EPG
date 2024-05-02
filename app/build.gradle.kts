@@ -61,8 +61,8 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material)
     implementation(libs.androidx.lifecycle.runtime.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -72,6 +72,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.timber)
+    implementation(libs.androidx.compose.tooling)
 
     // Coil
     implementation(libs.coil.compose)
@@ -82,6 +83,7 @@ dependencies {
     implementation(libs.androidx.material3.compose)
     implementation(libs.androidx.material.android)
 
+    implementation(libs.androidx.compose.foundation)
     //Lifecycle
     implementation(libs.androidx.viewmodel)
 

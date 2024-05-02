@@ -27,4 +27,15 @@ Feel free to use it or improve.
 
 ![screenshot](first_look_v2_style.png)
 
+# V4 Epg look Live Overlay
+
+With Bottom Info
+![screenshot](Screenshot_2v5_bottom.png)
+
+With Hover over Info
+![screenshot](Screenshot_2v5_pop.png)
+
+
+
+
 #Logos found https://github.com/Jasmeet181/mediaportal-us-logos
