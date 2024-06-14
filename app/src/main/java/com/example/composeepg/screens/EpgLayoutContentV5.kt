@@ -59,6 +59,7 @@ import com.example.composeepg.data.ProgramRowItems
 import com.example.composeepg.screens.components.ChannelItemsContentV3
 import com.example.composeepg.screens.components.HoursItemsContent
 import com.example.composeepg.screens.components.ProgramItemsContentV2
+import com.example.composeepg.screens.components.ProgramItemsExpandContentPreview
 import com.example.composeepg.screens.components.dialogs.CardDialog
 import com.example.composeepg.view.HomeScreenUiState
 import com.example.composeepg.view.MainViewModel
@@ -291,7 +292,7 @@ fun CreateViewV5(
                                     /**
                                      * Programs Row
                                      */
-                                    ProgramItemsContentV2(program, cellHeight, onFocusChange = { isFocused ->
+                                    ProgramItemsExpandContentPreview(program, cellHeight, onFocusChange = { isFocused ->
                                         if (isFocused) {
                                             focusedIndex = index + 1
                                             focusedIndexP = program.programID

@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import com.example.composeepg.screens.EpgLayoutContentV5
+import com.example.composeepg.screens.EpgLayoutContentV6
+import com.example.composeepg.screens.EpgLayoutContentV7
 import com.example.composeepg.ui.theme.ComposeEpgTheme
 import com.example.composeepg.view.MainViewModel
 import com.kevinnzou.compose.progressindicator.BuildConfig
@@ -40,7 +42,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     EpgLayoutContentV5(viewModel,false,true)
-
+                    //EpgLayoutContentV7()
                     /**
                      *
                      * V1  EpgLayoutContentV1()
