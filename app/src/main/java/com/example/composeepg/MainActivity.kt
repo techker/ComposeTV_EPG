@@ -4,45 +4,36 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.ui.Modifier
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.MaterialTheme
-import com.example.composeepg.screens.EpgLayoutContentV5
+import androidx.compose.ui.graphics.Color
 import com.example.composeepg.screens.EpgLayoutContentV6
-import com.example.composeepg.screens.EpgLayoutContentV7
 import com.example.composeepg.ui.theme.ComposeEpgTheme
-import com.example.composeepg.view.MainViewModel
 import com.kevinnzou.compose.progressindicator.BuildConfig
 import timber.log.Timber.DebugTree
 import timber.log.Timber.Forest.plant
 
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: MainViewModel by viewModels()
-    @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         if (BuildConfig.DEBUG) {
             plant(DebugTree())
         }
-
         enableEdgeToEdge()
         setContent {
             ComposeEpgTheme {
                 Box(
                     modifier = Modifier
                         .wrapContentSize()
-                        .background(MaterialTheme.colorScheme.surface)
+                        //.background(MaterialTheme.colorScheme.surface) Others
+                        .background(Color.DarkGray) // Applies to EpgLayoutContentV6()
 
                 ) {
+                    EpgLayoutContentV6()
 
-                    EpgLayoutContentV5(viewModel,false,true)
-                    //EpgLayoutContentV7()
                     /**
                      *
                      * V1  EpgLayoutContentV1()

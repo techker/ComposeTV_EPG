@@ -35,6 +35,8 @@ With Bottom Info
 With Hover over Info
 ![screenshot](Screenshot_2v5_pop.png)
 
+# V6 using Surface views seems to have a better performance and less Lag, aldo it is harder to manage Focus it seems better overall
+![screenshot](Screenshot_v6.png)
 
 
 
