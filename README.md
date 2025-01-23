@@ -34,10 +34,11 @@ With Bottom Info
 With Hover over Info
 ![screenshot](Screenshot_2v5_pop.png)
 
-# V6 using Surface views seems to have a better performance and less Lag, aldo it is harder to manage Focus it seems better overall
+# V6 using Surface views to test performance
 ![screenshot](Screenshot_v6.png)
 
 # V7 LibtvGuide test from Github
+
 
 # V8 Full Compose better nav and click shows program details in the Cell
 ![screenshot](Screenshot_v8.png)
