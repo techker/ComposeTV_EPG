@@ -28,7 +28,6 @@ Feel free to use it or improve.
 ![screenshot](first_look_v2_style.png)
 
 # V4 Epg look Live Overlay
-
 With Bottom Info
 ![screenshot](Screenshot_2v5_bottom.png)
 
@@ -38,6 +37,9 @@ With Hover over Info
 # V6 using Surface views seems to have a better performance and less Lag, aldo it is harder to manage Focus it seems better overall
 ![screenshot](Screenshot_v6.png)
 
+# V7 LibtvGuide test from Github
 
+# V8 Full Compose better nav and click shows program details in the Cell
+![screenshot](Screenshot_v8.png)
 
 #Logos found https://github.com/Jasmeet181/mediaportal-us-logos

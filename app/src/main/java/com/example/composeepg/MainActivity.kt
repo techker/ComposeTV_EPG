@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.composeepg.screens.EpgLayoutContentV6
+import com.example.composeepg.screens.EPGScreen
 import com.example.composeepg.ui.theme.ComposeEpgTheme
 import com.kevinnzou.compose.progressindicator.BuildConfig
 import timber.log.Timber.DebugTree
@@ -28,12 +28,11 @@ class MainActivity : ComponentActivity() {
                 Box(
                     modifier = Modifier
                         .wrapContentSize()
-                        //.background(MaterialTheme.colorScheme.surface) Others
-                        .background(Color.DarkGray) // Applies to EpgLayoutContentV6()
+                        .background(Color.DarkGray)
 
                 ) {
-                    EpgLayoutContentV6()
-
+                    //EpgLayoutContentV6()
+                    EPGScreen()
                     /**
                      *
                      * V1  EpgLayoutContentV1()
@@ -41,6 +40,9 @@ class MainActivity : ComponentActivity() {
                      * V3  EpgLayoutContentV3()
                      * V4 EpgLayoutContentV4() Test
                      * V5 EpgLayoutContentV5(viewModel,false,true) : Set one true or false ShowPopup Info or bottom info on guide
+                     * V6 EpgLayoutContentV6()
+                     * V7 EpgLayoutContentV7() LibtvGuide test from Github
+                     * V8 EPGScreen() New version
                      */
 
                 }

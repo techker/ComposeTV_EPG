@@ -51,6 +51,7 @@ android {
 
 dependencies {
 
+    implementation(libs.kotlinx.datetime)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.viewmodel.livedata)
@@ -82,6 +83,9 @@ dependencies {
     implementation(libs.androidx.tv.material)
     implementation(libs.androidx.material3.compose)
     implementation(libs.androidx.material.android)
+
+    //Material Icons
+    implementation(libs.material.icons)
 
     implementation(libs.androidx.compose.foundation)
     //Lifecycle

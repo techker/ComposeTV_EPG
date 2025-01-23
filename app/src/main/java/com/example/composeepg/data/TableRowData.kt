@@ -1,5 +1,7 @@
 package com.example.composeepg.data
 
+import com.example.composeepg.jctvguide.data.Event
+
 data class ProgramRowItems(
     val programID: Int,
     val programName: String,
@@ -14,6 +16,24 @@ data class ProgramRowItems(
     val genre:String,
     val quality:String,
     val isAdult:Boolean
+)
+data class ProgramRowItemsV2(
+    val programID: Int,
+    val programName: String,
+    val programImage: String,
+    val programDescription:String,
+    val programStart: Long,
+    val programEnd: Long,
+    val channelId: Int,
+    val isRecording: Boolean,
+    val isLookBack: Boolean,
+    val isLocked: Boolean,
+    val genre:String,
+    val quality:String,
+    val isAdult:Boolean
+)
+data class ChannelRowItemsV2(
+    val id: Int, val title: String, val icon: String, var events: List<Event> = emptyList()
 )
 
 data class ChannelRowItems(
